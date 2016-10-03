@@ -45,7 +45,7 @@ checkSurvivalData <- function( object ){
 ##' see vignette and \code{SurvivalData} for further iunformation
 ##' @export
 setClass("SurvivalData", 
-          slots= list( subject.data = "data.frame", ctrl.arm="character", active.arm="character", subgroups="character" ),
+          slots= list( subject.data = "data.frame", ctrl.arm="character", active.arm="character", subgroups="character", covdef="list" ),
           validity = checkSurvivalData )
 
 
@@ -63,6 +63,7 @@ SurvivalData <- function( data,
                           subject,
                           arm, 
                           covariates=NULL,
+                          covdef=NULL,
                           subgroups=NULL,
                           ctrl.arm,
                           active.arm,
@@ -102,15 +103,33 @@ SurvivalData <- function( data,
   names( c_sub ) <- subgroups
   
   # ADD SOME CHECKS FOR COVs and SUBs
-  
+  # 1. MAKE SURE THE COVARIATE IS DEFINED
+  for( i_cov in covariates ) {
+    if( !any( sapply( covdef, function(x) x@name==i_cov  ) ) ) {
+      stop( paste0( "Covariate ", i_cov, " not defined!" ))
+    }
+  }
+  # 2. IF CATEGORICAL VARIABLE, CHECK THAT VALID VALUES
+  idx <- which( sapply( covdef, function(x){ x@type=="categorical" && x@name==i_cov } ) )
+  if( length( idx > 0 ) ) {
+    for( i in idx )
+    name <- covdef[[ i ]]@name
+    categories <- covdef[[ i ]]@categories
+    if( !is.factor( data[, name] ) ) data[, name] = as.factor( data[, name] )
+    if( !all( levels( data[, name ] ) %in% categories ) ) {
+      stop( paste0( " Covariate ", name, " is categorical but values: ",  paste0( levels( data[, name ] ), collapse=", " ), 
+                    " not all found in definitions: ", paste0( categories, collapse=", " ) ))
+    }
+  }
   subject.data <- cbind( subject.data, c_cov, c_sub )
   
   if( !any( data[,arm]==ctrl.arm ) )   { stop( "Control arm label is not found in the arm column!" )}
   if( !any( data[,arm]==active.arm ) ) { stop( "Active arm label is not found in the arm column!" )}
   
   # Validation occurs in the validity function of the class 
-  return( new( "SurvivalData", subject.data = subject.data, ctrl.arm=ctrl.arm, active.arm=active.arm, subgroups=subgroups ) )
+  return( new( "SurvivalData", subject.data = subject.data, ctrl.arm=ctrl.arm, active.arm=active.arm, subgroups=subgroups, covdef = covdef ) )
 }
+
 
 
 
@@ -147,14 +166,14 @@ setMethod( "summary",
 ##' @export
 setMethod( "plot",
            signature( x="SurvivalData", y="missing" ),
-           function( x, xlab="log(t)", ylab="log(-log(S(t)))", main="", separate.plots=FALSE, ... ) {
+           function( x, xlab="log(t)", ylab="log(-log(S(t)))", main="", separate.plots=FALSE, loglogS=TRUE, ... ) {
              
              if( nrow( x@subject.data ) == 0 ) stop( "Empty data frame!" )
              if( sum( x@subject.data$has.event ) == 1 ){
                stop( "Cannot fit a model to a dataset with no events" )
              }
              
-
+          if( loglogS ){
             loglogSplot( x@subject.data, 
                          arms=c(x@ctrl.arm, x@active.arm ),
                          xlab, 
@@ -162,7 +181,19 @@ setMethod( "plot",
                          main, 
                          separate.plots=separate.plots,
                          ... )
-           }
+          }
+          else {
+            if( xlab=="log(t)" ){ xlab = "time" }
+            if( ylab=="log(-log(S(t)))" ){ ylab = "S(t)" }
+            kmPlot( x@subject.data, 
+                    arms=c(x@ctrl.arm, x@active.arm ),
+                    xlab, 
+                    ylab, 
+                    main, 
+                    separate.plots=separate.plots,
+                    ... )
+          }
+      }
 )
 
 
@@ -218,6 +249,43 @@ loglogSplot = function( x, arms, xlab, ylab, main, separate.plots=FALSE, ... ){
 }
 
 
+##' @name KM plot for a given endpoint
+##' @param time Time variable
+##' @param has.event Has event variable
+##' @param title text to be displayed above plot
+##' @param xlab xlab
+##' @param ylab ylab
+##' @param ... additional plot params 
+##' @export
+kmPlot = function( x, arms, xlab, ylab, main, separate.plots=FALSE, ... ){
+  # Make base graphics plot for KM curve
+  x1 <- x[ x$arm == arms[1], ]
+  x2 <- x[ x$arm == arms[2], ]
+  
+  model.1 <- survfit( Surv( time, has.event ) ~ 1, data=x1 )
+  model.2 <- survfit( Surv( time, has.event ) ~ 1, data=x2 )
+  
+  res.1 <- data.frame( t = model.1$time, s = model.1$surv )
+  res.1 <- res.1[ res.1$t > 0 & res.1$s > 0 & res.1$s < 1, ]
+  res.2 <- data.frame( t = model.2$time, s = model.2$surv )
+  res.2 <- res.2[ res.2$t > 0 & res.2$s > 0 & res.2$s < 1, ]  
+  
+  df.1 <- data.frame( x = res.1$t, y = res.1$s ) 
+  df.2 <- data.frame( x = res.2$t, y = res.2$s ) 
+  
+  if( separate.plots == TRUE ){
+    par( mfrow=c(1,2 ))
+    plot( df.1$x, df.1$y, col="red", "s", xlab=xlab,  ylab=ylab, main=main ) 
+    plot( df.2$x, df.2$y, col="red", "s", xlab=xlab,  ylab=ylab, main=main )
+    par( mfrow=c(1,1) )
+  }
+  else {
+    plot( df.1$x, df.1$y, col="red", "s", xlab=xlab,  ylab=ylab, main=main )
+    lines( df.2$x, df.2$y, col="blue", "s" )
+  }
+}
+
+
 
 setMethod( "summary", 
            signature( object="SurvivalData" ),
@@ -244,3 +312,47 @@ setMethod( "summary",
   cat( "\n-------------------------------------------------------------")
 })
 
+
+##' Method to create to check that covariates exist in data object
+##' @rdname hasCovariates
+##' @param object survival data object
+##' @param covariates vector of covariates 
+setGeneric( "hasCovariates", function( object, covariates, ... ) standardGeneric( "hasCovariates" ))
+
+
+##' @rdname hasCovariates
+##' @export
+setMethod( "hasCovariates", 
+  signature( object="SurvivalData", covariates="character" ),
+  function( object, covariates ){
+    xx <- sapply( covariates, function( i_cov ) {
+      i_cov %in% names( object@subject.data ) &&
+        i_cov %in% sapply( object@covdef, function( i ) i@name )
+    })
+    if( all( xx ) ) { return( TRUE ) }
+    else { warning( paste0( covariates[ xx==FALSE ], " not found!" ) ); return( FALSE ) }
+})
+
+
+##' Method to create to check that covariates exist in data object
+##' @rdname getSubgroupString
+##' @param object survival data object
+##' @param subgroups vector of subgroups
+setGeneric( "getSubgroupString", function( object, subgroups, ... ) standardGeneric( "getSubgroupString" ))
+
+
+##' @rdname getSubgroupString
+##' @export
+setMethod( "getSubgroupString", 
+           signature( object="SurvivalData", subgroups="character" ),
+           function( object, subgroups ){
+             xx <- sapply( subgroups, function( i_sub ) {
+               i_sub %in% object@subgroups
+             })
+             if( all( xx ) ) { 
+               paste0( "(",
+                 paste0( subgroups, "==1", collapse="&" ),
+                 ")" )
+             }
+             else { warning( paste0( subgroups[ xx==FALSE ], " not found!" ) ); return( "" ) }
+           })
