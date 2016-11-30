@@ -5,7 +5,7 @@ temp/*
 .Rproj.user
 .Rhistory
 .RData
-Sibyl.Rproj
+*.Rproj
 tests/testthat/test-something.R
 
 vignettes/*

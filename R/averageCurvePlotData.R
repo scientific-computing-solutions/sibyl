@@ -32,7 +32,7 @@ setGeneric( "createAvCurvePlotData",
 ##' @param maxTime (numeric) the time to extrapolate the curves to (default=NULL implies no extrapolation)
 ##' @param Npoints (numeric) the number of time points for which the survival curves are to be evaluated at
 ##' @param Nsim (numeric) the number of simulations used to generate the averaged curves
-##' @param models (character vector) which models from \code{names(object@models)}) are to be used when 
+##' @param models (character vector) which models from \code{names(object@@models)} are to be used when 
 ##' calculating averaged survival curves - default NULL implies use all
 ##' @param seed (numeric, default NULL) if not NULL then set random seed 
 ##' @export

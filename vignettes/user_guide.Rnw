@@ -9,8 +9,9 @@
 %\VignetteEngine{knitr::knitr}
 
 \begin{document}
+%\SweaveOpts{concordance=TRUE}
 
-<<include=FALSE>>=
+<<,include=FALSE>>=
 library(knitr)
 opts_chunk$set(concordance=TRUE)
 @
