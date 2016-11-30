@@ -1,0 +1,45 @@
+Package: Sibyl
+Type: Package
+Title: Extrapolate Parametric Survival Curves
+Version: 0.3.3
+Author: Paul Cooper, Nikolas Burkoff and Daniel Dalevi
+Maintainer: Daniel Dalevi <daniel.dalevi@astrazeneca.com>
+Description: The package fits parametric models to time-to-event data and
+    extrapolates these curves to larger survival times.
+License: GPL (>= 2)
+LazyData: TRUE
+Suggests:
+    testthat,
+    knitr
+VignetteBuilder: knitr
+Collate:
+    'Sibyl-package.R'
+    'columnDef.R'
+    'survivalData.R'
+    'survivalModels.R'
+    'averageCurvePlotData.R'
+    'covariateOutput.R'
+    'endPointOutput.R'
+    'helpFitting.R'
+    'helpStats.R'
+    'icTable.R'
+    'lifeTable.R'
+    'semiParametric.R'
+    'rmst.R'
+    'semiParametricOutput.R'
+    'summariseCoeffs.R'
+    'survivalDataOutput.R'
+RoxygenNote: 5.0.1
+Imports:
+    graphics,
+    methods,
+    stats,
+    utils,
+    azGraphics
+Depends:
+    flexsurv,
+    ggplot2,
+    R (>= 2.10),
+    survival,
+    azRMST,
+    ReporteRs

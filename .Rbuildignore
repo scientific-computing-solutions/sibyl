@@ -1,0 +1,10 @@
+^.*\.Rproj$
+^\.Rproj\.user$
+^\.Rbuildignore
+^\.RData$
+^\.Rhistory$
+^data-raw$
+^temp$
+^\.git$
+^\.gitattributes$
+^\.gitignore$

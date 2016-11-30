@@ -1,0 +1,15 @@
+inst/doc
+temp/*
+!temp/dev.R
+*.pdf
+.Rproj.user
+.Rhistory
+.RData
+Sibyl.Rproj
+tests/testthat/test-something.R
+
+vignettes/*
+!vignettes/*.Rnw
+!vignettes/*.bib
+!vignettes/Parameterizations.JPG
+
