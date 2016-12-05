@@ -25,6 +25,39 @@ setMethod( "summariseCoeffs","SurvivalModel",
   }
 )
 
+##' Method to return Cholesky decomposition of variance-covariance
+##' matrix
+##' @name getCholeskyDecomp
+##' @rdname getCholeskyDecomp-methods
+##' @param object (SurvivalModel object) contains fitted models with estimated
+##'        parameters
+##' @param ... additional arguments to vcov       
+##' @export
+setGeneric("getCholeskyDecomp",function(object,...) standardGeneric("getCholeskyDecomp")) 
+
+
+##' @rdname getCholeskyDecomp-methods
+##' @aliases getCholeskyDecomp,SurvivalModel-methods
+##' @param class ('matrix' or 'FlexTable' (default)) output format
+##' for the summary tables
+##' @param digits (numeric) The number of significant digits to round the FlexTable output to.
+##' This option is ignored if class is not 'FlexTable'
+##' @export
+setMethod("getCholeskyDecomp","SurvivalModel",
+  function(object,  class=c("matrix","FlexTable")[2], digits=3){
+            
+    #get covariate and arm column definitions for calculating the rownames of the output table
+    columnDetails <- c(list(object@survData@armDef),object@survData@covDef)
+    
+    summaryFn=function(modelName, modelClass){
+      function(fittedModel) t(chol(vcov(fittedModel)))
+    }
+            
+    calcModelTables(object@models, class=class, summaryFn=summaryFn,
+                   digits=digits, columnDetails, leftBorder = TRUE)
+})
+
+
 
 ##' Method to return covariance matrix of estimated model parameters
 ##' @name vcov

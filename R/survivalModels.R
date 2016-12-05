@@ -244,16 +244,18 @@ setGeneric("addModel", function(object, ...) standardGeneric("addModel"))
 ##' For example modelOptions=list(spline=list(k=4)) will pass the argument k=4 to flexsurvSpline
 ##' @param preferredPackage (character string) name of the preferred package
 ##'        in which to look for the specified model
+##' @param suppressOverwriteWarning (logical) should be FALSE so that a warning is displayed
+##' when overwriting existing model  
 ##' @export
 setMethod("addModel", signature = c("SurvivalModel"),
-function(object, modelName, modelOptions=NULL, preferredPackage = getDefaultPackage()){
+function(object, modelName, modelOptions=NULL, preferredPackage = getDefaultPackage(),suppressOverwriteWarning=FALSE){
 
   # Match model names case-insensitively
   modelName <- lapply(modelName, tolower)
 
   # Warn if over-write existing models
   isDuplicate <- vapply(modelName, function(n){n %in% names(object@models)}, FUN.VALUE = FALSE)
-  if (any(isDuplicate)){
+  if (any(isDuplicate) && !suppressOverwriteWarning){
     duplicateNames <- modelName[isDuplicate]
     warning(paste0("The following models have already been fitted and (if new models are successfully 
                    fitted then) they will be over-written: ",

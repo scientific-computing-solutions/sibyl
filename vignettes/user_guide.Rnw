@@ -9,7 +9,6 @@
 %\VignetteEngine{knitr::knitr}
 
 \begin{document}
-%\SweaveOpts{concordance=TRUE}
 
 <<,include=FALSE>>=
 library(knitr)
@@ -311,11 +310,13 @@ print(coeffWithArm[["weibull"]])
 print(coeffByArm[["gompertz"]])
 @
 
-As well as the model covariances
+As well as the model covariances and Cholesky decompostion
 <<>>=
 covarsWithArm <- vcov(models.withArm, class="matrix")
+choleskyDecompositions <- getCholeskyDecomp(models.withArm,class="matrix")
 
 print(covarsWithArm[["weibull"]])
+print(choleskyDecompositions[["llogis"]])
 @
 
 Setting the argument `class' to be `FlexTable' will generate formatted tables which can be output into a Word document.

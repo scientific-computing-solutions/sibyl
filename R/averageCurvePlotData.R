@@ -225,7 +225,7 @@ setMethod("plot", signature(x="AvCurvePlotData", y="missing"),
 
     #if xmax is set then set xlim
     if(!is.null(xMax)){
-      p <- p + xlim(0,xMax)
+      p <- p + coord_cartesian(xlim=c(0, xMax))
     }
     
     
