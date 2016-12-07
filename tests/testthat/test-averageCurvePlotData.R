@@ -125,3 +125,5 @@ test_that("KM_part_of_avcurveplot_matches_outputfromsurvfit_when_covariates_are_
   expect_equal(kmPatchOnlyData$S,expectedS) 
   
 })
+
+

@@ -11,8 +11,9 @@ NULL
 ##'       separate models are fit for each arm
 ##' @slot survFormula (formula) formula used to fit the model
 ##' @slot subgroup (character string or NA) name of subgroup fitted
-##' @slot endPointDef (list) defines name, time and censor column for the fitted
+##' @slot endPointDef (list) defines time and censor column for the fitted
 ##'       endpoint
+##' @slot endPoint (character) name of the end-point to be fitted
 ##' see vignette and \code{SurvivalModel} for further iunformation
 ##' @export
 setClass("SurvivalModel",
@@ -22,7 +23,8 @@ setClass("SurvivalModel",
                       armAsFactor = "logical",
                       survFormula = "formula",
                       subgroup = "character",
-                      endPointDef = "list"))
+                      endPointDef = "list",
+                      endPoint="character"))
 
 ##' Method to create the \code{SurvivalModel} object
 ##' @name fitModels
@@ -130,7 +132,8 @@ function(object,
       armAsFactor = armAsFactor,
       survFormula = formulaToFit,
       subgroup = subgroup,
-      endPointDef = endPointDef)
+      endPointDef = endPointDef,
+      endPoint=endPoint)
 })
 
 

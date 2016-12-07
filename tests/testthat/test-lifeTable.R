@@ -72,3 +72,25 @@ test_that("getBestModel_uses_AIC_of_models_when_armAsFactor_is_TRUE",{
   
 })
 
+test_that("nocovariate_and_armAsFactor_match_summary.flexsurvreg",{
+  survivalData <- createSurvivalDataObject()
+  fit <- fitModels(survivalData,endPoint="relapse",armAsFactor=TRUE,model=c("weibull","gompertz"))
+  lT <- createLifeTable(fit, times = seq(0, 20, 4), class="data.frame", model="gompertz")
+  lifeTablesByArm <- split(lT,lT$Arm)
+  expect_equal(lifeTablesByArm$patchOnly$t, seq(0,20,4))
+  
+  summ <- summary.flexsurvreg(fit@models$gompertz[[1]],t=seq(0,20,4),newdata=data.frame(arm="patchOnly"))
+  expect_equal(lifeTablesByArm$patchOnly$S,summ[[1]]$est)
+
+})
+
+test_that("nocovariate_and_no_armAsFactor_match_summary.flexsurvreg",{
+  survivalData <- createSurvivalDataObject()
+  fit <- fitModels(survivalData,endPoint="relapse",armAsFactor=FALSE,model=c("weibull","gompertz"))
+  lT <- createLifeTable(fit, times = seq(0, 20, 4), class="data.frame", model="gompertz")
+  lifeTablesByArm <- split(lT,lT$Arm)
+  expect_equal(lifeTablesByArm$patchOnly$t, seq(0,20,4))
+  
+  summ <- summary.flexsurvreg(fit@models$gompertz[[1]],t=seq(0,20,4))
+  expect_equal(lifeTablesByArm$patchOnly$S,summ[[1]]$est)
+})

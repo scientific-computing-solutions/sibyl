@@ -421,3 +421,23 @@ minOfMaxObserved <- function(object, endPointName){
   
   min(maxObserved)
 }
+
+##' Calculate the maximum observed time 
+##' for a given endPoint 
+##' 
+##' @param object (SurvivalData object)
+##' @param endPointName (character) An endpoint associated with the
+##' SurvivalData object 
+##' @return (numeric) maximum observed time
+##' @export
+maxObservedTime <- function(object, endPointName){
+  if(class(object)!="SurvivalData"){
+    stop("object must be a SurvivalData object")  
+  }
+  
+  if(length(endPointName)!=1 || !endPointName %in% names(object@endPoints)){
+    stop(paste("Invalid endPointName argument should be one of",
+               paste(names(object@endPoints),collapse=", ")))
+  }
+  max(object@subject.data[,object@endPoints[[endPointName]]$timeCol])
+}

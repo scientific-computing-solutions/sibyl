@@ -104,8 +104,8 @@ test_that("SemiParametricModelObjects_can_be_created_with_covariates",{
   
   #Cox:
   cox <- coxph(Surv(ttr,!ttr.cens) ~ arm+age+race, data=survivalData@subject.data, ties="breslow")
-  cox$call <- sP@cox$call
-  expect_equal(sP@cox, cox)
+  cox$call <- sP@coxWithStrata$call
+  expect_equal(sP@coxWithStrata, cox)
   
 })
 
@@ -125,8 +125,8 @@ test_that("SemiParametricModelObjects_can_be_created_with_subgroups_and_strata",
   
   #Cox:
   cox <- coxph(Surv(ttr,!ttr.cens) ~ arm+strata(race), data=df, ties="breslow")
-  cox$call <- sP@cox$call
-  expect_equal(sP@cox, cox)
+  cox$call <- sP@coxWithStrata$call
+  expect_equal(sP@coxWithStrata, cox)
 })
 
 test_that("only_appropriate_subgroup_data_is_added_to_survdata_slot",{
@@ -149,14 +149,38 @@ test_that("all_data_is_added_to_survdata_slot_if_no_subgroups",{
 
 context("semiParametricFittingOutput")
 
-test_that("logrank_test_matches_independentCoxFit",{
+test_that("logrank_test_matches_independentCoxFit_with_strata",{
   survivalData <- createSurvivalDataObject()
   sP <- fitSemiParametric(survivalData,endPoint="relapse",strata="race")
   logrankOutput <- coxphLogRankTest(sP)
-  cox <- coxph(Surv(ttr,!ttr.cens)~ arm + strata(race),data=survivalData@subject.data)
-  expect_equal(logrankOutput, as.data.frame(summary(cox)[9]))
+  
+  coxWithStrata <- coxph(Surv(ttr,!ttr.cens)~ arm + strata(race),
+                         data=survivalData@subject.data)
+  summStrata <- summary(coxWithStrata)[9]$logtest
+  names(summStrata) <- NULL
+  
+  expect_equal(logrankOutput[2,1],summStrata[1])
+  expect_equal(logrankOutput[2,2],summStrata[2])
+  expect_equal(logrankOutput[2,3],summStrata[3])
 
 })
+
+test_that("logrank_test_with_no_strata_matches_even_strata_also_used",{
+  survivalData <- createSurvivalDataObject()
+  sP <- fitSemiParametric(survivalData,endPoint="relapse")
+  logrankOutput <- coxphLogRankTest(sP)
+  
+  cox <- coxph(Surv(ttr,!ttr.cens)~ arm ,
+                         data=survivalData@subject.data)
+  summ <- summary(cox)[9]$logtest
+  names(summ) <- NULL
+  
+  expect_equal(logrankOutput[1,1],summ[1])
+  expect_equal(logrankOutput[1,2],summ[2])
+  expect_equal(logrankOutput[1,3],summ[3])
+
+})
+
 
 test_that("number_of_events_is_correctly_calculated",{
   survivalData <- createSurvivalDataObject()

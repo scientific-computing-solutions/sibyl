@@ -8,7 +8,7 @@
 \title{Plot methods for Sibyl package}
 \usage{
 \S4method{plot}{AvCurvePlotData,missing}(x, use.facet = TRUE,
-  outputModel = NULL, xMax = NULL)
+  outputModel = NULL, xMax = NULL, useCI = FALSE)
 
 \S4method{plot}{SemiParametricModel,missing}(x, type = c("KM", "CumHaz",
   "LoglogS", "LogoddS", "InvNormS")[1], use.facet = TRUE, logTime = NULL,
@@ -24,6 +24,8 @@ implies use all) if =character(0) then output only the KM curve}
 
 \item{xMax}{(numeric or default NULL) the x-axis limit for the graph. If not included then
 all data is displayed}
+
+\item{useCI}{(logical) TRUE if including CI on graph, FALSE otherwise}
 
 \item{type}{(character) the type of plot to be created; one of "KM",
 "CumHaz", "LoglogS", "LogoddS" or "InvNormS"}

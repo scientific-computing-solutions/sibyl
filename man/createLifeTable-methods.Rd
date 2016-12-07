@@ -11,7 +11,7 @@ createLifeTable(object, ...)
 
 \S4method{createLifeTable}{SurvivalModel}(object, times, modelToUse = NULL,
   Nsim = 500, class = c("data.frame", "FlexTable")[2], digits = 3,
-  seed = NULL)
+  seed = NULL, B = 1000)
 }
 \arguments{
 \item{object}{(SurvivalModel object) contains fitted models}
@@ -24,19 +24,29 @@ createLifeTable(object, ...)
 NULL, the model with lowest AIC is chosen}
 
 \item{Nsim}{(numeric) number of simulations used to estimate the average
-curve}
+curve - only used when models includes covariates}
 
 \item{class}{(data.frame or default flexTable) the class of the created table}
 
 \item{digits}{(numeric default 3) the number of decimal places to round the
 FlexTable output to}
 
-\item{seed}{(numeric, default NULL) if not NULL then set random seed}
+\item{seed}{(numeric, default NULL) if not NULL then set random seed (although it will only be
+used if models include covariates)}
+
+\item{B}{(integer) Only used when no covariates in model. See summary.flexsurvreg 
+Number of simulations from the normal asymptotic distribution of the estimates used 
+to calculate confidence intervals. Decrease for greater speed at the expense of accuracy, 
+or set B=0 to turn off calculation of CIs.}
 }
 \value{
 The lifetable
 }
 \description{
 Method to create life table
+}
+\details{
+If the models include covariates a simulation procedure is required to generate averaged survival
+curves. If the models do not include covariates then \code{summary.flexsurvreg} is used
 }
 

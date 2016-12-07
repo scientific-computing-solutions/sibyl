@@ -26,8 +26,10 @@ separate models are fit for each arm}
 
 \item{\code{subgroup}}{(character string or NA) name of subgroup fitted}
 
-\item{\code{endPointDef}}{(list) defines name, time and censor column for the fitted
-      endpoint
+\item{\code{endPointDef}}{(list) defines time and censor column for the fitted
+endpoint}
+
+\item{\code{endPoint}}{(character) name of the end-point to be fitted
 see vignette and \code{SurvivalModel} for further iunformation}
 }}
 

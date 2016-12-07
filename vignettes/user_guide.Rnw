@@ -169,8 +169,14 @@ all(sP2@survData@subject.data$sub.isMale)
 
 We can extract the Cox model fit and the Kaplan-Meier estimator:
 <<>>=
+#No stratification/covariates
 cox.model <- sP@cox
 print(cox.model$formula)
+
+#With stratification/covariates
+cox.modelStrata <- sP@coxWithStrata
+print(cox.modelStrata$formula)
+
 
 print(sP@km)
 @
@@ -277,7 +283,6 @@ Or, separate models to can be fitted to each arm by changing armAsFactor to FALS
 <<>>=
 models.byArm <- fitModels(my.data,
                       armAsFactor = FALSE,
-                      covariates = c("race"),
                       subgroup="sub.isHeavySmoker",
                       endPoint = "relapse")
 @
@@ -353,11 +358,15 @@ print(lifeTableWithArm)
 We can do the same for models fitted per treatment arm. If we do not specify a parametric model, the function uses the model that has the lowest Akaike information criterion (or sum of AIC if separate models are fitted per arm)
 
 <<>>=
-lifeTableByArm <- createLifeTable(models.byArm, times = seq(0, 20, 4), class="data.frame")
+lifeTableByArm <- createLifeTable(models.byArm, times = seq(0, 20, 4), 
+                                  class="data.frame")
 print(lifeTableByArm)
 @
 
-By setting class to `FlexTable' a formatted table for inclusion in a Word document is produced. 
+By setting class to `FlexTable' a formatted table for inclusion in a Word document is produced.
+
+When calculating the lifetable (and average survival curves below) if the models include no covariates then the summary.flexsurvreg function is used to generate the survival curves and no simulation is required.  
+
 
 \subsection{Average survival curves}
 In order to provide a summary curve for the population over a set of covariates we calculate extrapolated average survival curves (See \cite{AdjSurv:2015}). This is done by performing a set of simulations where we sample parameter values from the fitted distribution and in each iteration calculate a predicted survival percentage for each patient. The average of these are then calculated. The median survival and quantiles taken over all simulations are then output. 
@@ -369,21 +378,23 @@ The \textbf{createAvCurvePlotData} function is used to calculate average surviva
 \item models: which models from the SurvivalModel are to be used when
 calculating averaged survival curves - default NULL implies use all
 \item Nsim: the number of simulations to use when creating the average survival curves
+\item seed: Random seed
 \end{itemize}
 
-The simulation step takes a bit of time, so please be patient.
+The simulation step (for the model with covariates) takes a bit of time, so please be patient.
 <<>>=
 #Calculate values of KM and parametric model curves
 paramSurvCurveByArm <- createAvCurvePlotData(models.byArm, Npoints=151)
-paramSurvCurveWithArm <- createAvCurvePlotData(models.withArm, maxTime=100, models="weibull")
+paramSurvCurveWithArm <- createAvCurvePlotData(models.withArm, maxTime=100, 
+                                               models="weibull")
 @
 
 Finally these can be plotted:
 
 <<>>=
 # Plot KM and parametric model curves
-plot(paramSurvCurveByArm)
-plot(paramSurvCurveWithArm)
+plot(paramSurvCurveByArm, use.facet=FALSE)
+plot(paramSurvCurveWithArm, useCI=TRUE)
 @
 
 

@@ -34,10 +34,17 @@ setGeneric( "createAvCurvePlotData",
 ##' @param Nsim (numeric) the number of simulations used to generate the averaged curves
 ##' @param models (character vector) which models from \code{names(object@@models)} are to be used when 
 ##' calculating averaged survival curves - default NULL implies use all
-##' @param seed (numeric, default NULL) if not NULL then set random seed 
+##' @param seed (numeric, default NULL) if not NULL then set random seed (although it will only be
+##' used if models include covariates) - only used when models includes covariates 
+##' @param B (integer) Only used when no covariates in model. See summary.flexsurvreg 
+##' Number of simulations from the normal asymptotic distribution of the estimates used 
+##' to calculate confidence intervals. Decrease for greater speed at the expense of accuracy, 
+##' or set B=0 to turn off calculation of CIs.
+##' @details If the models include covariates a simulation procedure is required to generate averaged survival
+##' curves. If the models do not include covariates then \code{summary.flexsurvreg} is used
 ##' @export
 setMethod("createAvCurvePlotData", signature(object="SurvivalModel"),
-  function(object, maxTime=NULL, Npoints=201, Nsim=500, models=NULL, seed=NULL){
+  function(object, maxTime=NULL, Npoints=201, Nsim=500, models=NULL, seed=NULL, B=1000){
 
     validateCreateAvCurvePLotDataArgs(maxTime, Npoints, Nsim, seed)
 
@@ -89,12 +96,22 @@ setMethod("createAvCurvePlotData", signature(object="SurvivalModel"),
     #each arm, concatenated
     parametricLifeTables <- lapply(models, function(modelName){
 
+      if(length(object@covariates)!=0){
+      
       #calculate the lifetable for a single model, for each arm
       lifeTableOneModel <-
         mapply(calcParametricLifeTable, mod=object@models[[modelName]],
                oneArmData=dataByArm,
                MoreArgs=list(times=times,Nsim=Nsim, outputCI=TRUE), SIMPLIFY = FALSE)
-
+      }
+      else{
+        lifeTableOneModel <- mapply(calcLifeTableNoCovariates, mod=object@models[[modelName]], 
+                                    armName=getArmNames(object@survData),
+                                    MoreArgs=list(times=times,outputCI=TRUE,B=B,
+                                                  armAsFactor=object@armAsFactor),
+                                    SIMPLIFY = FALSE)  
+      }
+    
       lifeTableOneModel <- do.call("rbind",lifeTableOneModel)
       lifeTableOneModel$Arm <- rep(names(dataByArm), each=length(times))
       lifeTableOneModel$model <- modelName
@@ -148,10 +165,11 @@ validateCreateAvCurvePLotDataArgs <- function(maxTime, Npoints, Nsim, seed){
 ##' @param outputModel (character) which model's survival curves should be plotted (default NULL
 ##' implies use all) if =character(0) then output only the KM curve
 ##' @param xMax (numeric or default NULL) the x-axis limit for the graph. If not included then
-##' all data is displayed 
+##' all data is displayed
+##' @param useCI (logical) TRUE if including CI on graph, FALSE otherwise 
 ##' @export
 setMethod("plot", signature(x="AvCurvePlotData", y="missing"),
-  function(x, use.facet=TRUE, outputModel=NULL, xMax=NULL){
+  function(x, use.facet=TRUE, outputModel=NULL, xMax=NULL, useCI=FALSE){
 
     #R-cmd-check thinks t, s, model, ... are global 
     #variables inside the ggplot commands so complains about them
@@ -164,11 +182,13 @@ setMethod("plot", signature(x="AvCurvePlotData", y="missing"),
     upper <- NULL
     lower <- NULL
     
+    #colours for distributions
+    cols <- getDistColours(unique(x@plotdata$model))
+    legendLabel <- getDistributionDisplayNames(unique(x@plotdata$model))
+      
     
     # Pull out data for KM curve - this is plotted differently from the others
     kmData <- x@plotdata[x@plotdata$model == "KM", ]
-    
-    kmLineSize <- 1.2
     
     #if model given then only plot KM and the given models:
     if(!is.null(outputModel)){
@@ -188,8 +208,10 @@ setMethod("plot", signature(x="AvCurvePlotData", y="missing"),
     }
     
 
-    # Create plot, with KM line shown step-wise
-    p <- ggplot(modelData, aes(x = t, y = S, colour = model))
+    # Create plot, with KM line shown step-wise and set colours
+    #and lgend names correctly
+    p <- ggplot(modelData, aes(x = t, y = S, colour = model)) +
+      scale_colour_manual(name="Distribution",values=cols,labels=legendLabel)
 
     # Add labels
     p <- p + xlab("Time")
@@ -204,35 +226,80 @@ setMethod("plot", signature(x="AvCurvePlotData", y="missing"),
       # Use the same line type on each plot
       p <- p +
            geom_line() +
-           geom_step(data = kmData, aes(x = t, y = S), size = kmLineSize)
-
+           geom_step(data = kmData, aes(x = t, y = S))
       # Add lines for confidence intervals
-      p <- p +
-           geom_line(aes(x = t, y = lower, colour = model), linetype = "dashed") +
-           geom_step(data = kmData, aes(x = t, y = lower), linetype = "dashed", size = kmLineSize) +
-           geom_line(aes(x = t, y = upper, colour = model), linetype = "dashed") +
-           geom_step(data = kmData, aes(x = t, y = upper), linetype = "dashed", size = kmLineSize)
+      if(useCI){
+        p <- p +
+          geom_line(aes(x = t, y = lower, colour = model), linetype = "dashed") +
+          geom_step(data = kmData, aes(x = t, y = lower), linetype = "dashed") +
+          geom_line(aes(x = t, y = upper, colour = model), linetype = "dashed") +
+          geom_step(data = kmData, aes(x = t, y = upper), linetype = "dashed")
+      }
+      
+      
     }
     else{
       # Use different line types for each arm, on a single plot
       p <- p +
            geom_line(aes(linetype = Arm)) +
-           geom_step(data = kmData, size = kmLineSize, aes(linetype = Arm))
+           geom_step(data = kmData, aes(linetype = Arm))
 
-      # Don't add confidence intervals - the plot would be unreadable
-      warning("For simplicity, confidence intervals are not shown when displaying all arms on a single plot")
+      if(useCI){
+        p <- p +
+          geom_line(aes(x = t, y = lower, colour = model, linetype = Arm)) +
+          geom_step(data = kmData, aes(x = t, y = lower, linetype = Arm)) +
+          geom_line(aes(x = t, y = upper, colour = model,linetype = Arm)) +
+          geom_step(data = kmData, aes(x = t, y = upper,linetype = Arm))
+      }
+      
     }
+    
+    
+    
+    
 
     #if xmax is set then set xlim
     if(!is.null(xMax)){
-      p <- p + coord_cartesian(xlim=c(0, xMax))
+      p <- p + coord_cartesian(xlim=c(0, xMax), ylim=c(0,1),expand=FALSE)
     }
     
+    # Format background and borders
+    p <- p + theme(panel.background = element_blank(),
+                   panel.border = element_rect(colour = "black", fill = NA),
+                   panel.grid.major = element_line(color="black", linetype="dotted"),
+                   panel.grid.minor = element_blank())
     
     # Display
     p
   }
 )
 
-
+#modelNames should be a vector of unique model
+#names in the avCurvePlotData object
+getDistColours <- function(modelNames){
+  
+  retVal <- vapply(modelNames, function(x){
+    switch(x,
+           KM="black",
+           exp="red",
+           exponential="red",
+           weibull="darkblue",
+           lnorm="darkgreen",
+           lognormal="darkgreen",
+           llogis="orange",
+           loglogistic="orange",
+           gompertz="purple",
+           gengamma="cyan",
+           gengamma.orig="cyan",
+           spline="yellow",
+           logistic="blue",
+           gaussian="brown",
+           genf="pink",
+           genf.orig="pink",
+           "red" #default if other
+    )
+  },FUN.VALUE = character(1))
+  names(retVal) <- modelNames
+  retVal
+}
 

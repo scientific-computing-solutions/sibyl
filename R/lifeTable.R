@@ -15,15 +15,22 @@ setGeneric("createLifeTable", function(object,  ...) standardGeneric("createLife
 ##' @param modelToUse (character) name of model to base life table upon. If
 ##'        NULL, the model with lowest AIC is chosen
 ##' @param Nsim (numeric) number of simulations used to estimate the average
-##'        curve
+##'        curve - only used when models includes covariates
 ##' @param class (data.frame or default flexTable) the class of the created table
 ##' @param digits (numeric default 3) the number of decimal places to round the
 ##' FlexTable output to 
-##' @param seed (numeric, default NULL) if not NULL then set random seed 
+##' @param seed (numeric, default NULL) if not NULL then set random seed (although it will only be
+##' used if models include covariates)
+##' @param B (integer) Only used when no covariates in model. See summary.flexsurvreg 
+##' Number of simulations from the normal asymptotic distribution of the estimates used 
+##' to calculate confidence intervals. Decrease for greater speed at the expense of accuracy, 
+##' or set B=0 to turn off calculation of CIs.
+##' @details If the models include covariates a simulation procedure is required to generate averaged survival
+##' curves. If the models do not include covariates then \code{summary.flexsurvreg} is used 
 ##' @export
 setMethod("createLifeTable", signature(object="SurvivalModel"),
   function(object, times, modelToUse = NULL, Nsim=500, class=c("data.frame","FlexTable")[2], digits=3,
-           seed=NULL){
+           seed=NULL, B=1000){
 
     if(!is.null(seed)){
       set.seed(seed)
@@ -51,7 +58,8 @@ setMethod("createLifeTable", signature(object="SurvivalModel"),
     modelFits <- object@models[[modelToUse]]
 
     # Construct life table for this model
-    lifeTable <- calcLifeTable(modelFits, object@survData@subject.data, object@endPointDef, times, modelToUse, Nsim)
+    lifeTable <- calcLifeTable(modelFits, object@survData@subject.data, object@endPointDef, times, modelToUse, Nsim,
+                               object@armAsFactor, length(object@covariates)!=0, getArmNames(object@survData), B)
 
     if(class=="data.frame"){
       return(lifeTable)
@@ -121,7 +129,13 @@ getBestModel <- function(object){
 # modelFits: list of model fit to each arm
 # times: vector, times at which to evaluate the life table
 # modelToUse: string; name of the parametric model used
-calcLifeTable <- function(modelFits, subjectData, endPointDef, times, modelToUse, Nsim){
+#Nsim number of simulations (if simulating)
+#armAsFactor: logical is the model included in the arm?
+#useCovariates: logical does the model include covariates
+#B: see summary.flexsurvreg 
+calcLifeTable <- function(modelFits, subjectData, endPointDef, times,
+                          modelToUse, Nsim, armAsFactor, useCovariates, armNames,
+                          B){
 
   # Ensure times in ascending order
   times <- sort(times)
@@ -135,16 +149,20 @@ calcLifeTable <- function(modelFits, subjectData, endPointDef, times, modelToUse
 
   #Now calculate life table for given modelfits:
 
-  #split data by arm
-  dataByArm <- split(subjectData, subjectData[, "arm"])
-
   #Apply calcParametricLifeTable to each {modelFits, dataByArm} pair,
   #if there is only one modelFit (as it is was fitted with arm as factor)
   #it is reused for each arm
-  parametricLifeTables <-
-    mapply(calcParametricLifeTable, mod=modelFits, oneArmData=dataByArm,
-           MoreArgs=list(times=times,Nsim=Nsim), SIMPLIFY = FALSE)
-
+  if(useCovariates){
+    #split data by arm
+    dataByArm <- split(subjectData, subjectData[, "arm"])
+    parametricLifeTables <- mapply(calcParametricLifeTable, mod=modelFits, oneArmData=dataByArm,
+                              MoreArgs=list(times=times,Nsim=Nsim), SIMPLIFY = FALSE)
+  }
+  else{
+    parametricLifeTables <- mapply(calcLifeTableNoCovariates, mod=modelFits, armName=armNames,
+                                   MoreArgs=list(times=times,armAsFactor=armAsFactor,B=B), SIMPLIFY = FALSE)  
+  }
+    
   names(parametricLifeTables) <- names(KMLifeTables)
 
   #merge the parametric and KM lifetables together
@@ -227,9 +245,48 @@ getLastPoint <- function(t, km){
 }
 
 
+#Calculate the parametric life table when the model has no covariates
+#mod: The (flexSurv) model used to fit this arm, from which to generate the lifetable
+#armName: The name of a single arm
+#times: The times
+#armAsFactor: logical whether arm is a covariate in the model
+#conf.int: whether to output the confidence interval?
+#level: The percentiles to calculate for the confidence interval of S
+#returns a data frame with columns:
+# t:times (with 0 added if not part of input parameter)
+# S: median of the Nsim average cumulative surival curves at the given times
+# if outputCI=True then output lower and upper confidence intervals at 100*(1-conf.int) and
+# 100*conf.int  percentiles of the Nsim S values
+calcLifeTableNoCovariates <- function(mod, armName, times, armAsFactor, outputCI=FALSE, conf.int=0.95, B){
+  if(!class(mod)=="flexsurvreg"){
+    stop("Cannot create average lifetable unless using a flexsurv model")
+  } 
+  
+  #Do not need B if not outputting confidence intervals
+  if(!outputCI) B <- 0
+  
+  if(armAsFactor){
+    result <- summary.flexsurvreg(mod,t=times, cl=conf.int, newdata=data.frame(arm=armName), ci=outputCI, B=B)
+  }
+  else{
+    result <- summary.flexsurvreg(mod,t=times, cl=conf.int, ci=outputCI, B=B)
+  }
+  
+  result <- result[[1]]
+  
+  cols <- c("t","S")
+  if(outputCI) cols <- c(cols,"lower", "upper")
+  colnames(result) <- cols
+  rownames(result) <- NULL
+  
+  
+  if(!0 %in% times){
+    result <-rbind(c(0,rep(1,1+2*outputCI)),result)
+  }
+  result
+}
 
-
-#Calculate the parametric life table
+#Calculate the parametric life table when the model has covariates
 #mod: The (flexSurv) model used to fit this arm, from which to generate the lifetable
 #oneArmData: The data associated with a single arm
 #times: The times
@@ -258,11 +315,9 @@ calcParametricLifeTable <- function(mod, oneArmData, times, Nsim, outputCI=FALSE
   #create parameters
   sim.params <- normboot.flexsurvreg(mod, B=Nsim, newdata=oneArmData)
   if(!is.list(sim.params)){
-    #TODO at the moment if no covariates normboot.flexsurvreg
-    #behaves differently (see its documentation)
-    #here we are duplicating the single subject's output for each subject
-    #there are alternative approaches (i.e. calling normboot.flexsurvreg)
-    #nrow(oneArmdata) times
+    #This should never actually be called (unless Nsim=1) as
+    #in the case of no covariates the calcLifeTableNoCovariates
+    #should be used instead
     sim.params <- rep(list(sim.params),nrow(oneArmData))
   }
   

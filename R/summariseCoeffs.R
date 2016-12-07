@@ -286,7 +286,8 @@ getDistributionDisplayNames <- function(modelNames){
   convertFunc <- function(x){
     if(x=="lnorm") return("Lognormal")
     if(x=="llogis") return("Loglogistic")
-    if(x=="gengamma") return("Generalized Gamma")
+    if(x=="gengamma" || x=="gengamma.orig") return("Generalized Gamma")
+    if(x=="genf" || x=="genf.orig") return("Generalized F")
     if(nchar(x)==1) return(toupper(x))
     paste0(toupper(substr(x,1,1)),substr(x,2,nchar(x)))
   }
