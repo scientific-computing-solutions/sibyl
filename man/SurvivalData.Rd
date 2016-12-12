@@ -42,6 +42,9 @@ A \code{SurvivalData} object
 \description{
 Constructor for \code{SurvivalData} object
 }
+\details{
+See Vignette for further details
+}
 \seealso{
 \code{\link{SurvivalData-class}}
 }

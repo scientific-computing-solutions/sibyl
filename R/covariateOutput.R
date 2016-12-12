@@ -3,16 +3,16 @@ NULL
 
 # Create the patient characteristics table
 # This outputs two tables: one for categorical and one for numeric data
-covariatesSummary <- function(object, htmlEncoding){
+covariatesSummary <- function(object, htmlEncoding, meanOrMedian){
   
   numericCovariatesTable <- createCovariateSummarySubTable(object,
                                                            "numeric", digits=1,
-                                                           htmlEncoding)
+                                                           htmlEncoding, meanOrMedian)
   
   categoricalCovariatesTable <- createCovariateSummarySubTable(object,
                                                                c("categorical", "logical"),
                                                                digits=2,
-                                                               htmlEncoding)
+                                                               htmlEncoding, meanOrMedian)
   
   return(list(numeric=numericCovariatesTable,
               categorical=categoricalCovariatesTable))
@@ -20,7 +20,11 @@ covariatesSummary <- function(object, htmlEncoding){
 
 
 #create either the categorical or the numeric summary table
-createCovariateSummarySubTable <- function(object, requiredTypes, digits, htmlEncoding){
+createCovariateSummarySubTable <- function(object, requiredTypes, digits, htmlEncoding, meanOrMedian){
+  
+  #Need to replace <NA> in categorical and logical with a "missing data" level
+  #for output in table and converts logical covariates to factors for output
+  object <- convertMissingFactorsToOwnLevel(object)
   
   numRowsFromCov <- vapply(object@covDef, numberOfRowsNeeded, requiredTypes, FUN.VALUE = numeric(1))
   
@@ -29,7 +33,8 @@ createCovariateSummarySubTable <- function(object, requiredTypes, digits, htmlEn
   
   #get objects which depend on whether this is the numeric or categorical
   #summary table
-  typeSpecificValues <- getTypeSpecificValues("numeric" %in% requiredTypes, digits, requiredTypes, htmlEncoding)
+  typeSpecificValues <- getTypeSpecificValues("numeric" %in% requiredTypes, digits, requiredTypes, htmlEncoding,
+                                              meanOrMedian)
   
   
   #create FlexTable
@@ -60,6 +65,8 @@ createCovariateSummarySubTable <- function(object, requiredTypes, digits, htmlEn
   MyFTable[1:numRows,1:2] <-  parProperties(text.align="left")
   MyFTable[1:numRows,1] <- textProperties(font.weight = "bold")
   
+  #align text to top of cells
+  MyFTable[1:numRows,3:numCols] <- cellProperties(vertical.align="top")
   
   #sort out headers  
   subgroupDetails <- extractSubgroupTable(object)
@@ -87,8 +94,7 @@ numberOfRowsNeeded <- function(covDef, requiredTypes){
   type <- covDef@type
   if(!type %in% requiredTypes) return(0)
   if(type=="numeric") return(1)
-  if(type=="logical") return(2)
-  length(covDef@categories) #categorical type
+  length(covDef@categories) #categorical type (logical has been converted to categorical)
 }  
 
 
@@ -96,37 +102,51 @@ numberOfRowsNeeded <- function(covDef, requiredTypes){
 #footer row string (to be displayed in last row of table)
 #secondColFunction - the function used to generate the second column
 #of the table (the units or category values)
-getTypeSpecificValues <- function(isNumericTable, digits, requiredTypes, htmlEncoding){
+getTypeSpecificValues <- function(isNumericTable, digits, requiredTypes, htmlEncoding, meanOrMedian){
   if(isNumericTable){
     
     pm <- if(htmlEncoding) "&plusmn;" else "\U00B1" 
     
     summaryFunc <- function(covVals){
-      if(length(covVals)==0){
+      if(length(covVals)==0 || sum(!is.na(covVals))==0){
         return("NA")
       }
-      mu <- round(mean(covVals),digits)
-      ste <- round(se(covVals), digits)
-      mi <- round(min(covVals), digits)
-      ma <- round(max(covVals), digits)
-      media <- round(median(covVals), digits)
-      paste(mu," (", pm, ste,")\n [", mi, ",", ma,"] ", media, sep="")
+      
+      numberMissing <- sum(is.na(covVals))
+      if(numberMissing > 0){
+        missingString <- paste0("\n[", numberMissing,"]")
+      }
+      else{
+        missingString <- ""
+      }
+      
+      if(meanOrMedian=="mean"){
+        mu <- round(mean(covVals,na.rm = TRUE),digits)
+        ste <- round(se(covVals, na.rm = TRUE), digits)  
+        return(paste(mu," (", pm, ste,")", missingString, sep=""))
+      }
+      
+      media <- round(median(covVals,na.rm = TRUE), digits)
+      q1 <- round(quantile(covVals,probs = 0.25, na.rm = TRUE), digits)
+      q3 <- round(quantile(covVals,probs = 0.75, na.rm = TRUE), digits)
+      paste(media, " [", q1, ",", q3,"]",missingString, sep="")
     }
     
-    outputFooterString <- paste("Output: mean (", pm, "se)\n [min, max] median",sep="")
-   
+    if(meanOrMedian=="mean"){
+      outputFooterString <- paste("Output: mean (", pm, "se)\n [#missing - if any]",sep="")
+    }
+    else{
+      outputFooterString <- "Output: median [Q1, Q3]\n [#missing - if any]"                      
+    }
+                            
     secondColFunction <- function(covDef){
       if(covDef@type %in% requiredTypes ) return(covDef@unit)
     }
     
     leftCol2Header <-"Unit"
   }
-  else{ #if categorical table
+  else{ #if categorical table (logical has been set to categorical)
     summaryFunc <- function(covVals){
-      #coerce logical to factor for the analysis
-      if(is.logical(covVals)){
-        covVals <- factor(covVals, levels=c(TRUE,FALSE)) 
-      }
       
       #named vector of results one per category
       vapply(levels(covVals),function(x){
@@ -141,10 +161,7 @@ getTypeSpecificValues <- function(isNumericTable, digits, requiredTypes, htmlEnc
     outputFooterString <- "Output: % (n)" 
     
     secondColFunction <- function(covDef){
-      if(covDef@type=="logical") return(c("TRUE","FALSE"))
-      if(covDef@type=="categorical"){
-        return(levels(covDef@categories))
-      } 
+      levels(covDef@categories)
     }
     
     leftCol2Header <-""
@@ -203,4 +220,47 @@ extractCovariateOutput <- function(object, func, requiredTypes){
   })
   
   do.call("rbind", retVal) 
+}
+
+#function which takes a SurvivalData object and replaces missing factor variables
+#with their own level "(no data)" for output in covariate table and converts
+#logical variables to factors TRUE, FALSE
+convertMissingFactorsToOwnLevel <- function(object){
+  for(idx in seq_along(object@covDef)){
+    
+    cov <- object@covDef[[idx]]
+    name <- cov@columnName
+    
+    if(cov@type == "logical"){
+      object@covDef[[idx]]@type <- "categorical"
+      object@covDef[[idx]]@categories <- factor(c("TRUE","FALSE"),levels = c("TRUE","FALSE"))
+      object@subject.data[,name] <- factor(object@subject.data[,name], levels=c(TRUE,FALSE)) 
+      
+    }
+    
+    
+    if(cov@type %in% c("logical", "categorical")){
+      #if missing data
+      if(any(is.na(object@subject.data[,name]))){
+        
+        newCategories <- as.character(object@covDef[[idx]]@categories)
+        
+        #change column definition
+        newCategories <- factor(c(newCategories, "(no data)"),
+                                levels= c(newCategories, "(no data)"))
+        
+        object@covDef[[idx]]@categories <- newCategories
+      
+        #and data
+        object@subject.data[,name] <-as.character(object@subject.data[,name])
+        object@subject.data[,name] <- ifelse(is.na(object@subject.data[,name]), "(no data)",
+                                             object@subject.data[,name] )
+        
+        object@subject.data[,name] <- factor(object@subject.data[,name],levels= newCategories)
+      }
+      
+    }
+  }
+  
+  object
 }

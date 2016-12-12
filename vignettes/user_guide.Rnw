@@ -25,17 +25,17 @@ This R-package is design to simplify the statistical analyses needed to perform 
 \section{Requirements}
 Besides from some external packages (such as ggplot2) the \texttt{Sibyl} package depends on two internal packages \texttt{azGraphics} and \texttt{azRMST}. These need to be installed together with \texttt{Sibyl}. Before starting the examples, we load the package.  
 <<,message=FALSE, warning=FALSE>>=
-  library( Sibyl )
+library(Sibyl)
 @
 
 \section{Data}
-The \texttt{Sibyl} package contains an example dataset which is derived from a dataset in the \texttt{asaur} package. 
+The \texttt{Sibyl} package contains an example dataset which is inspired by a dataset in the \texttt{asaur} package. 
 <<>>=
-  data( sibylData )
+data(sibylData)
 @
 We can view the data frame:
 <<>>=
-  head( sibylData )
+head(sibylData)
 @
 The dataset has the following columns:
 \begin{itemize}
@@ -50,7 +50,7 @@ The dataset has the following columns:
 \end{itemize}
 
 \subsection{Defining the covariates, treatment arms and subgroups}
-In order for \texttt{Sibyl} to correctly output information about covariates, treatment arm and subgroups, we first need to define these using the \texttt{ColumnDef} function. Note: all must be defined otherwise an error will be shown when creating the \texttt{SurvivalData object} (Section~\ref{sec:survdata}). Further, \texttt{ColumnDef} it is recommended that the name of the column is as it appears in the raw data as this simplifies when creating the \texttt{SurvivalData} object. The information needed to define the columns are listed below:
+In order for \texttt{Sibyl} to correctly output information about covariates, treatment arm and subgroups, we first need to define these using the \texttt{ColumnDef} function. Note: all must be defined otherwise an error will be shown when creating the \texttt{SurvivalData object} (Section~\ref{sec:survdata}). Furthermore, it is recommended that the name of the column is as it appears in the raw data as this simplifies the creation of the \texttt{SurvivalData} object. The information needed to define the columns are listed below:
 
 \begin{itemize}
 \item displayName: the name used for this column when displaying results (character string)
@@ -59,26 +59,26 @@ In order for \texttt{Sibyl} to correctly output information about covariates, tr
 \item unit: the unit associated with the column (character string)
 \end{itemize}
 
-First we define the columns corresponding to treatment arm in the order where control is listed first then active. 
+First we define the columns corresponding to treatment arm in the order where control is listed first. 
 <<>>=
-armDef <- ColumnDef( columnName = "grp",
-                     type = "categorical",
-                     categories = c("patchOnly", "combination") )
+armDef <- ColumnDef(columnName = "grp",
+                    type = "categorical",
+                    categories = c("patchOnly", "combination"))
 @
-This gives a message that categories have been specified for a categorical variable, but not as a factor. The danger of defining them as a vector rather than a factor is that their order might not be preserved through all the package functionality. The message makes explicit what order has been assumed for the categories.
+This gives a message that categories have been specified for a categorical variable, but not as a factor. The danger of defining them as a vector rather than a factor is that their order might not be preserved through all the package functionality. The message makes explicit what order has been assumed for the categories throughout the package.
 
-If we provide categories as a factor, or define a non-categorical column, then this warning does not appear which we is shown below where we define the covariates.
+If we provide categories as a factor, or define a non-categorical column, then this warning does not appear as shown below where we define the covariates.
 <<>>=
 covariateDef <- list(
   ColumnDef(columnName = "age",
             type = "numeric",
-            unit= "years"),
+            unit = "years"),
   ColumnDef(columnName = "race",
             type = "categorical",
             categories = factor(c("black", "hispanic", "other", "white"),
                                 levels=c("black", "white", "hispanic", "other"))))
 @
-Finally we define the subgroups. Note the displayNames that will be used in tabular output. 
+Finally we define the subgroups. Note the displayNames that will be used in table output. 
 <<>>=
 subgroupDef <- list(
   ColumnDef(columnName = "sub.isMale",
@@ -92,25 +92,19 @@ subgroupDef <- list(
 
 \subsection{The SurvivalData Object}
 \label{sec:survdata}
-The next step will be to create the \texttt{SurvivalData} object which is the basis for any downstream outputs, plots and analyses. 
+The next step is to create the \texttt{SurvivalData} object which is the basis for all downstream outputs, plots and analyses. 
 <<>>=
-my.data <- SurvivalData( data = sibylData,
-                         armDef = armDef,
-                         covDef = covariateDef,
-                         subgroupDef = subgroupDef,
-                         subjectCol = "ID",
-                         endPointNames = c("relapse", "newEndpoint"),
-                         censorCol = c("ttr.cens", "cens.2"),
-                         timeCol = c("ttr", "end.2") )
+my.data <- SurvivalData(data = sibylData,
+                        armDef = armDef,
+                        covDef = covariateDef,
+                        subgroupDef = subgroupDef,
+                        subjectCol = "ID",
+                        endPointNames = c("relapse", "newEndpoint"),
+                        censorCol = c("ttr.cens", "cens.2"),
+                        timeCol = c("ttr", "end.2"))
 @
 
-The first input is the raw data as previously described. The next three define which columns represent the definition we created for treatment arm, covariates and subgroups respectively. Several time-to-event variables can be added at the same time. Important is that the length and order of these three columns match (endPointNames, censorCol, timeCol). The first endpoint name is associated with the first censor column and the first time column etc. 
-\begin{itemize}
-\item subjectCol: the name of the column that defines the subject ID
-\item endPointNames: a vector of strings; each gives the name of a different end-point of interest
-\item censorCol: a vector of strings; indicator columns for whether the subject was censored for each end-point
-\item timeCol: a vector of strings; time of event columns for each end-point.
-\end{itemize}
+The first argument is the raw data as previously described. The next three define which columns represent the treatment arm, covariates and subgroups respectively. Several time-to-event variables can be added at the same time and it is important is that the length and order of these three columns match (endPointNames, censorCol, timeCol). The first endpoint name is associated with the first censor column and the first time column etc.
 
 In Oncology typical time-to-event variables may be:
 \begin{enumerate}	
@@ -120,12 +114,15 @@ In Oncology typical time-to-event variables may be:
 \item Post-progression survival (PPS)
 \end{enumerate}
 
+It is possible for some subjects not to have data for a given endpoint - for the data to be valid both the time column and censor indicator column must be missing (i.e. \texttt{NA}) or an empty character string (\texttt{""}). Subjects can have missing covariates, again denoted by empty character strings or missing values. Missing covariates are treated by survfit and (flex)survreg with \texttt{na.action=options()\$na.action}, see appropriate help files for further details.
+
 \subsection{Basic SurvivalData outputs}
 In order to view distribution of patients and events (including maturity) for given stratifying covariates, endpoints or subgroups, we can use the SurvivalData object to create basic summary tables of the data.
 <<>>=
 subgroupSummary <- summary(my.data,type="subgroups")
 endPointsSummary <- summary(my.data,type="endPoints", digits=2)
-covariatesSummary <- summary(my.data,type="covariates")
+covariatesSummary <- summary(my.data,type="covariates", 
+                             meanOrMedian="mean")
 @
 
 These objects are FlexTables and they can be imported into a ReporteRs Word document:
@@ -146,7 +143,7 @@ We use the \texttt{fitSemiParametric} function to perform the semi-parametric mo
 \item Log rank test statitics (stratified or unstratified) based on coxmodel (\texttt{coxph})
 \item Log cumulative hazard plots
 \item Cox-Snell residual plot
-\item Restricted Mean survival time (stratified or unstratified)
+\item Restricted Mean survival time
 \end{enumerate}
 
 Alongside the SurvivalData object, the function requires that we specify the endPoint and Subgroup we wish to use for the analyses.  There is also the possibility (optionally) to specify covariates and stratifying covariates:
@@ -156,13 +153,19 @@ Alongside the SurvivalData object, the function requires that we specify the end
 \item strata: a vector of covariates to be used as strata when fitting the Cox model
 \end{itemize}
 
-The KM curve and KM survival estimates are always performed without covariates or strata variables (only intercept), whereas the Cox model and RMST use the covariates and strata if entered as inputs.
+The KM curve and KM survival estimates are always performed without covariates or strata variables (only intercept), whereas the Cox model is fitted twice, once using the covariates and strata variables if entered as inputs and once unstratified.
 <<>>=
-sP <- fitSemiParametric(my.data,endPoint="relapse",covariates=c("age"),strata=c("race"))
-sP2 <- fitSemiParametric(my.data,endPoint="newEndpoint",subgroup="sub.isMale")
+sP <- fitSemiParametric(my.data,
+                        endPoint="relapse",
+                        covariates=c("age"),
+                        strata=c("race"))
+
+sP2 <- fitSemiParametric(my.data,
+                         endPoint="newEndpoint",
+                         subgroup="sub.isMale")
 @
 
-The fitSemiParametric function creates a \texttt{SemiParametricModel} object. Note if a subgroup has been used then only the appropriate subset of the data is found inside the SemiParametricModel object:
+The fitSemiParametric function creates a \texttt{SemiParametricModel} object. Note if a subgroup has been used then only the appropriate subset of the data is found inside the SemiParametricModel object (and if subject does not have data for the chosen endpoint it is also removed):
 <<>>=
 all(sP2@survData@subject.data$sub.isMale)
 @
@@ -186,7 +189,7 @@ And extract the logrank tests using the coxphLogRankTest function.
 print(coxphLogRankTest(sP))
 @
 
-The median time to event for these models can be obtained using the summary method (setting `class' to `FlexTable' will output a table for including in a word document:
+The median time to event for these models can be obtained using the summary method (setting `class' to `FlexTable' will output a table for including in a word document):
 <<>>=
 summary(sP, class="data.frame")
 @
@@ -208,8 +211,12 @@ where diagnostic plots may be:
 The use.facet argument determines whether arms are plotted on on the same, or different, axes. For example:
 
 <<>>=
-plot(sP, type="KM", n.at.risk=TRUE, pch=NA, col=1:2, conf.int=FALSE)
-plot(sP, type="CumHaz", use.facet=FALSE,logTime=FALSE)
+plot(sP, type="KM", n.at.risk=TRUE, 
+     pch=NA, col=1:2, conf.int=FALSE)
+
+plot(sP, type="CumHaz", use.facet=FALSE,
+     logTime=FALSE)
+
 plot(sP, type="loglogs", use.facet=TRUE)
 @
 The KM option displays slightly differently from the other options because it uses the \texttt{azGraphics} package rather than \texttt{ggplot2}. The extra arguments given make its appearance similar to the others'. For more information see the help file available via \texttt{help(azplot.km)}.
@@ -221,8 +228,11 @@ coxSnellres <- coxSnellRes(sP)
 @
 
 and plotted:
-<<>>=
-plot(coxSnellres$time, -log(coxSnellres$surv), type='s', xlab="Cox-Snell Residuals", ylab="Estimated Cumulative Hazard Function")
+<<,fig.height=4, fig.width=4>>=
+plot(coxSnellres$time, -log(coxSnellres$surv), 
+     type='s', xlab="Cox-Snell Residuals", 
+     ylab="Estimated Cumulative Hazard Function")
+
 abline(0,1, col="red", lty=2 )
 @
 
@@ -230,7 +240,8 @@ Finally the RMST per arm and distance can be calculated using the calcRmst funct
 <<>>=
 #setting class="FlexTable" will output a FlexTable for importing
 #into a word document
-rmstValue <- calcRmst(sP, alpha=0.05, trunc=40, class="rmst")
+rmstValue <- calcRmst(sP, alpha=0.05, 
+                      trunc=40, class="rmst")
 
 print(rmstValue$RMST)
 print(rmstValue$diff)
@@ -253,7 +264,7 @@ All models available in \texttt{flexsurv} and \texttt{survival} package are also
   \item Generalized gamma
   \item Spline-based method (up to 5-knots)
 \end{enumerate}
-These are not listed as "standard" as they require a bit more from the user (manual inspection of fit) and may not always converge. The parameterizations of the models are shown in the table below:
+These are not listed as ``standard" as they require a bit more from the user (manual inspection of fit) and may not always converge. The parameterizations of the models are shown in the table below:
 \begin{figure}[h]
   \centering
   \includegraphics[width=0.8\textwidth]{./Parameterizations}
@@ -262,7 +273,7 @@ These are not listed as "standard" as they require a bit more from the user (man
 The covariates are placed on the location parameter of the distribution, typically the "scale" or "rate" parameter, through a linear model, or a log-linear model if this parameter must be positive (See documentation of \texttt{flexsurv}). 
 
 \subsection{Fitting}
-The fitting of models is rather flexibel and the package makes it easy to fit the models, using the \texttt{fitModels} function, under the following options: 
+The fitting of models is rather flexible and the package makes it easy to fit the models, using the \texttt{fitModels} function, under the following options: 
 \begin{enumerate}
   \item	Separate fitting for each arm
   \item	Treatment as indicator in a univariate regression model
@@ -291,25 +302,30 @@ A preferred survival package (\texttt{survival} or \texttt{flexsurv}) can be spe
 
 We can add additional models:
 <<>>=
-models.withArm <- addModel(models.withArm, c("gengamma", "spline"), 
-                           modelOptions=list(spline=list(k=3,scale="odds")))
+models.withArm <- addModel(models.withArm, 
+                     c("gengamma", "spline"), 
+                     modelOptions=list(spline=list(k=3,scale="odds")))
+
 names(models.withArm@models)
 @
 
-Note it is possible to pass arguments to the model fitting functions using the modelOptions argument (both when adding a model and when initially creating the survival model object). This should be a names list of lists. In the example above the arguments \texttt{k=3} and \texttt{scale="odds"} are to be passed to the spline model fitting function. 
+Note it is possible to pass arguments to the model fitting functions using the modelOptions argument (both when adding a model and when initially creating the survival model object). This should be a named list of lists. In the example above the arguments \texttt{k=3} and \texttt{scale="odds"} are to be passed to the spline model fitting function. 
 
 We can also remove models, if for example the fit is poor and we want to exclude the model from any further analyses/output:
 <<>>=
-models.withArm <- removeModel(models.withArm, c("gengamma", "spline"))
+models.withArm <- removeModel(models.withArm, 
+                              c("gengamma", "spline"))
 names(models.withArm@models)
 @
-Note, as before, if a subgroup has been used then only the appropriate subset of the data is found inside the SurvivalModel object.
+Note, as before, if a subgroup has been used then only the appropriate subset of the data is found inside the SurvivalModel object and subjects who do not have data for the selected endpoint are also removed.
 
 \subsection{Properties and parameter estimates}
 Once parametric models have been fitted, we can calculate and display properties such as the estimated value of coefficients:
 <<>>=
-coeffWithArm <- summariseCoeffs(models.withArm, class="matrix")
-coeffByArm <- summariseCoeffs(models.byArm, class="matrix")
+coeffWithArm <- summariseCoeffs(models.withArm, 
+                                class="matrix")
+coeffByArm <- summariseCoeffs(models.byArm, 
+                              class="matrix")
 
 print(coeffWithArm[["weibull"]])
 print(coeffByArm[["gompertz"]])
@@ -317,8 +333,10 @@ print(coeffByArm[["gompertz"]])
 
 As well as the model covariances and Cholesky decompostion
 <<>>=
-covarsWithArm <- vcov(models.withArm, class="matrix")
-choleskyDecompositions <- getCholeskyDecomp(models.withArm,class="matrix")
+covarsWithArm <- vcov(models.withArm, 
+                      class="matrix")
+choleskyDecompositions <- getCholeskyDecomp(models.withArm,
+                                            class="matrix")
 
 print(covarsWithArm[["weibull"]])
 print(choleskyDecompositions[["llogis"]])
@@ -336,21 +354,26 @@ Models can be compared using Akaike and Bayes information criteria (AIC and BIC)
 \end{equation}
 where $L$ is the likelihood, $n$ number of observations and $k$ the number of free model parameters. Again setting the class argument to FlexTable (default) will output a sorted, formatted table to be included in a word document, alternatively a data frame can be output. 
 <<>>=
-icByArm <- createIcTable(models.byArm, class="data.frame")
+icByArm <- createIcTable(models.byArm, 
+                         class="data.frame")
 print(icByArm)
 @
 By default, if arms are fitted in separate models, the sum of the AIC/BIC are shown in the table, unless the summaryFn argument is set to "identity"):
 <<>>=
-icByArm2 <- createIcTable(models.byArm,summaryFn="identity", class="data.frame")
+icByArm2 <- createIcTable(models.byArm,
+                          summaryFn="identity", 
+                          class="data.frame")
 print(icByArm2)
 @
 \subsection{Life tables}
-We can use the models to calculate life tables,  i.e. the estimated or predicted proportion of survival at given time points, by providing a user defined vector of times. Life tables are calculated based on a) the non-parametric Kaplan-Meier estimate of the survival curve (no covariates, only intercept), and b) one of the parametric models fitted above:
+We can use the models to calculate life tables, i.e. the estimated or predicted proportion of survival at given time points, by providing a user defined vector of times. Life tables are calculated based on a) the non-parametric Kaplan-Meier estimate of the survival curve (no covariates, only intercept), and b) one of the parametric models fitted above:
 
 <<>>=
 # Calculate life table
-lifeTableWithArm <- createLifeTable(models.withArm, times = seq(0, 50, 10),
-                                    modelToUse = "llogis", class="data.frame")
+lifeTableWithArm <- createLifeTable(models.withArm,
+                                    times = seq(0, 50, 10),
+                                    modelToUse = "llogis", 
+                                    class="data.frame")
 # Display life tables
 print(lifeTableWithArm)
 @
@@ -358,7 +381,8 @@ print(lifeTableWithArm)
 We can do the same for models fitted per treatment arm. If we do not specify a parametric model, the function uses the model that has the lowest Akaike information criterion (or sum of AIC if separate models are fitted per arm)
 
 <<>>=
-lifeTableByArm <- createLifeTable(models.byArm, times = seq(0, 20, 4), 
+lifeTableByArm <- createLifeTable(models.byArm, 
+                                  times = seq(0, 20, 4), 
                                   class="data.frame")
 print(lifeTableByArm)
 @
@@ -377,8 +401,9 @@ The \textbf{createAvCurvePlotData} function is used to calculate average surviva
 \item maxTime: the time to extrapolate the curves to (default=NULL implies no extrapolation beyond end of KM curve)
 \item models: which models from the SurvivalModel are to be used when
 calculating averaged survival curves - default NULL implies use all
-\item Nsim: the number of simulations to use when creating the average survival curves
-\item seed: Random seed
+\item Nsim: the number of simulations to use when creating the average survival curves (only used when covariates are used and curves must be simulated)
+\item seed: Random seed (only used when covariates are used and curves must be simulated)
+\item B: (Only used when no covariates included and summary.flexsurvreg is used) Number of simulations from the normal asymptotic distribution of the estimates used to calculate confidence intervals. Decrease for greater speed at the expense of accuracy, or set B=0 to turn off calculation of CIs.
 \end{itemize}
 
 The simulation step (for the model with covariates) takes a bit of time, so please be patient.

@@ -98,11 +98,11 @@ test_that("extractEndPointOutput_uses_func_as_summary_function",{
   
   result <- extractEndPointOutput(survivalData,
                   function(time,cens){
-                    round(0.567845,3)
+                    as.character(round(0.567845,3))
                   })
   
-  ans <- t(data.frame(relapse=rep(0.568,6),
-                    newEndpoint=rep(0.568,6)))
+  ans <- t(data.frame(relapse=as.character(rep(0.568,6)),
+                    newEndpoint=as.character(rep(0.568,6))))
   
   colnames(ans) <- rep(c("patchOnly","combination"),3)
   expect_equal(ans, result)
@@ -115,14 +115,14 @@ test_that("extractEndPointOutput_with_func_as_maturity_calculates_maturity",{
   
   result <- extractEndPointOutput(survivalData,
                                   maturityFunc <- function(time, cens){
-                                    (length(cens)-sum(cens)) 
+                                    as.character((length(cens)-sum(cens))) 
                                   })
   
   #isMale maturity:
   #Number in each arm who had events in subgroup male
   isMaleData <- survivalData@subject.data[survivalData@subject.data$sub.isMale,]
-  maturityIsMale <- c(sum(!isMaleData$ttr.cens & isMaleData$arm == "patchOnly"),
-                      sum(!isMaleData$ttr.cens & isMaleData$arm == "combination"))
+  maturityIsMale <- as.character(c(sum(!isMaleData$ttr.cens & isMaleData$arm == "patchOnly"),
+                      sum(!isMaleData$ttr.cens & isMaleData$arm == "combination")))
   
   names(maturityIsMale) <- c("patchOnly","combination")
   
@@ -153,8 +153,10 @@ test_that("logical_covariates_are_treated_as_factors_for_covariate_summaries",{
   data("sibylData")
   inputs <- survivalDataConstuctorTestSetUp()
   
+  sibylData$covMale <- sibylData$sub.isMale
+  
   covariateDef <- list(
-    ColumnDef(columnName = "sub.isMale",
+    ColumnDef(columnName = "covMale",
               type = "logical",
               displayName = "Male"),
     ColumnDef(columnName = "race",
@@ -178,8 +180,11 @@ test_that("logical_covariates_are_treated_as_factors_for_covariate_summaries",{
 test_that("extractCovariateOutput_keeps_order_of_categories",{
   data("sibylData")
   inputs <- survivalDataConstuctorTestSetUp()
+  
+  sibylData$covMale <- sibylData$sub.isMale
+  
   covariateDef <- list(
-    ColumnDef(columnName = "sub.isMale",
+    ColumnDef(columnName = "covMale",
               type = "logical",
               displayName = "male"),
     ColumnDef(columnName = "race",
@@ -210,6 +215,8 @@ test_that("extractCovariateOutput_keeps_order_of_categories",{
     },character(1))
   }
   
+  #have to change logical covariate to categorical 
+  survivalData <- convertMissingFactorsToOwnLevel(survivalData)
   result <- extractCovariateOutput(survivalData, func=f, requiredTypes = c("logical","categorical"))
   
   expect_equal(rownames(result),c("TRUE","FALSE","white","black","hispanic","other"))
@@ -221,8 +228,9 @@ test_that("subgroup_as_a_covariate_sets_percent_as_100_in_table",{
   data("sibylData")
   inputs <- survivalDataConstuctorTestSetUp()
 
+  sibylData$covMale <- sibylData$sub.isMale
   covariateDef <- list(
-    ColumnDef(columnName = "sub.isMale",
+    ColumnDef(columnName = "covMale",
               type = "logical",
               displayName = "Male"))
 
@@ -237,6 +245,9 @@ test_that("subgroup_as_a_covariate_sets_percent_as_100_in_table",{
   
   #summary function to get the number and percentage
   f <- getTypeSpecificValues(FALSE, digits=2, requiredTypes=c("categorical","logical"))$summaryFunc
+  
+  #have to change logical covariate to categorical 
+  survivalData <- convertMissingFactorsToOwnLevel(survivalData)
   
   result <- extractCovariateOutput(survivalData, func=f, requiredTypes = c("logical","categorical"))
 

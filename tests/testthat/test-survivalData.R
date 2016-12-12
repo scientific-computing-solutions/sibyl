@@ -1,11 +1,17 @@
 source("setupFunctions.R")
 
 # Test helper function - invalidate a column of the data and check for an error
-errorIfColumnInvalid <- function(df, inputs, colName, invalidValues, condition=expect_error){
+errorIfColumnInvalid <- function(df, inputs, colName, invalidValues, condition=expect_error,
+                                 colName2=NULL,invalidValues2=NULL ){
 
-  for (thisValue in invalidValues){
+  for (x in seq_along(invalidValues)){
     testDf <- df
-    testDf[, colName] <- as.vector(thisValue)
+    testDf[, colName] <- invalidValues[[x]]
+    
+    if(!is.null(colName2)){
+      testDf[,colName2] <- invalidValues2[[x]]
+    }
+    
     condition(SurvivalData(data=testDf,
                            armDef=inputs$arm,
                            subjectCol="ID",
@@ -51,6 +57,54 @@ test_that("can_create_SurvivalData_objects_with_no_subgroups",{
                                timeCol="ttr")
 
   expect_equal(survivalData@subgroupDef,list())
+})
+
+test_that("can_create_SurvivalData_with_a_subject_with_NAs_for_endpoint_data",{
+  data("sibylData")
+  
+  inputs <- survivalDataConstuctorTestSetUp()
+  
+  sibylData$ttr[1] <- NA
+  sibylData$ttr.cens[1] <- NA
+  
+  survivalData <- SurvivalData(data=sibylData,
+                               armDef=inputs$arm,
+                               subjectCol="ID",
+                               covDef=inputs$cov,
+                               endPointNames="relapse",
+                               censorCol="ttr.cens",
+                               timeCol="ttr")
+  
+  expect_equal(class(survivalData@subject.data$ttr), "numeric")
+  expect_equal(class(survivalData@subject.data$ttr.cens), "logical")
+  
+  expect_true(is.na(survivalData@subject.data$ttr[1]))
+  expect_true(is.na(survivalData@subject.data$ttr.cens[1]))
+  
+})
+
+test_that("can_create_SurvivalData_with_a_subject_with_empty_string_for_endpoint_data",{
+  data("sibylData")
+  
+  inputs <- survivalDataConstuctorTestSetUp()
+  
+  sibylData$ttr[1] <- ""
+  sibylData$ttr.cens[1] <- ""
+  
+  survivalData <- SurvivalData(data=sibylData,
+                               armDef=inputs$arm,
+                               subjectCol="ID",
+                               covDef=inputs$cov,
+                               endPointNames="relapse",
+                               censorCol="ttr.cens",
+                               timeCol="ttr")
+  
+  expect_equal(class(survivalData@subject.data$ttr), "numeric")
+  expect_equal(class(survivalData@subject.data$ttr.cens), "logical")
+  expect_true(is.na(survivalData@subject.data$ttr[1]))
+  expect_true(is.na(survivalData@subject.data$ttr.cens[1]))
+  
+  
 })
 
 
@@ -149,6 +203,26 @@ test_that("error_if_endPointNames_not_unique",{
   
 })
 
+test_that("error_if_subgroup_also_covariate",{
+  data("sibylData")
+  inputs <- survivalDataConstuctorTestSetUp()
+  
+  inputs$cov[[3]] <-  ColumnDef(columnName = "sub.isMale",
+                                type = "logical",
+                                displayName = "the diplay names")
+  
+  
+  expect_error(SurvivalData(data = sibylData,
+                            armDef = inputs$arm,
+                            covDef = inputs$cov,
+                            subgroupDef = inputs$sub,
+                            subjectCol = "ID",
+                            endPointNames = c("ttr", "endpoint2"),
+                            censorCol = c("ttr.cens", "cens.2"),
+                            timeCol = c("ttr", "end.2")))
+})
+
+
 context("SurvivalData_columnDef_mismatches")
 
 test_that("no_error_if_1_element_list_of_arm_columns", {
@@ -240,11 +314,9 @@ test_that("error_if_times_non-numeric_NA_or_negative", {
   data("sibylData")
   sibylData <- sibylData[1:3, ]
 
-  allInvalid <- list(c("1", "2", "3"),
-                     c(4, 5, NA),
-                     c(NA, NA, NA),
+  allInvalid <- list(c("1", "hello", "3"),
                      c(TRUE, FALSE, TRUE),
-                     as.factor(c(1, 2, 3)),
+                     factor(c(2, 3, 4)),
                      c(-1, 1.1, 1.2),
                      c(-1, -2.7, 3.1))
 
@@ -259,15 +331,58 @@ test_that("error_if_censor_values_not_TRUE/FALSE_or_0/1", {
   sibylData <- sibylData[1:3, ]
 
   allInvalid <- list(c(0, 1, 2),
+                     as.factor(c(1, 0, 1)),
                      c(-1, 0, 0),
-                     c(0, NA, 0),
-                     c(0, 1, NA),
                      c(1.01, 0, 0),
                      c(1, 1, 0.00001),
                      c(1, 1, -0.00001))
 
   errorIfColumnInvalid(sibylData, inputs, "ttr.cens", allInvalid)
 })
+
+
+test_that("error_if_timeCol_or_cenosrCol_misssing_but_other_is_not",{
+  inputs <- survivalDataConstuctorTestSetUp()
+  
+  data("sibylData")
+  sibylData <- sibylData[1:3, ]
+  
+  time <- list(c(NA, 5, 10),
+               c("4","5",""),
+               c(5,8,4),
+               c(0, 5, 2),
+               c(NA,3,2))
+  
+  cens <- list(c(TRUE,FALSE,TRUE),
+               c(0,1,1),
+               c("TRUE","FALSE",""),
+               c(NA, 1, 1),
+               c(NA, NA, "1"))
+  
+  
+  errorIfColumnInvalid(sibylData, inputs, "ttr", time, 
+                       colName2 = "ttr.cens", invalidValues2 = cens)
+  
+})
+
+test_that("error_if_an_endpoint_has_no_time_or_censor_col",{
+  inputs <- survivalDataConstuctorTestSetUp()
+  
+  data("sibylData")
+  sibylData <- sibylData[1:3, ]
+  
+  time <- list(as.character(c(NA, NA, NA)),
+               as.numeric(c(NA,NA,NA)))
+  
+  cens <- list(as.numeric(c(NA, NA, NA)),
+               c(NA, NA, NA))
+  
+  
+  errorIfColumnInvalid(sibylData, inputs, "ttr", time, 
+                       colName2 = "ttr.cens", invalidValues2 = cens)
+  
+})
+
 
 test_that("error_if_subgroup_values_not_TRUE/FALSE_or_0/1", {
 

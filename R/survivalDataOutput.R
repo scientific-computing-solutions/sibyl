@@ -7,10 +7,17 @@
 ##' should be generated for the \code{SurvivalData} object
 ##' @param digits (numeric, default 1) number of decimal places for the output
 ##' @param htmlEncoding (logical) if TRUE use &plusmn instead of unicode plus minus sign 
+##' @param meanOrMedian ("median" or "mean") output summary function for the numeric covariates
+##' summary table
 ##' @export
 setMethod("summary", signature(object="SurvivalData"),
-  function(object, type=c("subgroups","endPoints","covariates")[1], digits=1, htmlEncoding=FALSE){
+  function(object, type=c("subgroups","endPoints","covariates")[1], digits=1, htmlEncoding=FALSE,
+           meanOrMedian=c("median","mean")[1]){
 
+  if(length(meanOrMedian) != 1 || !meanOrMedian %in% c("median","mean")){
+    stop("meanOrMedian argument must be 'mean' or 'median")
+  }  
+    
   if(length(digits)!=1 || !is.numeric(digits) || !digits > 0 || is.infinite(digits) ||
      is.na(digits)){
     stop("Invalid digits argument")
@@ -19,7 +26,7 @@ setMethod("summary", signature(object="SurvivalData"),
   switch(tolower(type),
                 "subgroups" = subgroupsSummary(object) ,
                 "endpoints" = endPointsSummary(object, digits=digits),
-                "covariates" = covariatesSummary(object, htmlEncoding),
+                "covariates" = covariatesSummary(object, htmlEncoding, meanOrMedian),
                  stop("Invalid type argument must be one of 'subgroups', 'endpoints'
                       or 'covariates'"))
 })

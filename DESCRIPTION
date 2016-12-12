@@ -1,7 +1,7 @@
 Package: Sibyl
 Type: Package
 Title: Extrapolate Parametric Survival Curves
-Version: 0.3.5
+Version: 0.3.6
 Author: Paul Cooper, Nikolas Burkoff and Daniel Dalevi
 Maintainer: Daniel Dalevi <daniel.dalevi@astrazeneca.com>
 Description: The package fits parametric models to time-to-event data and
@@ -29,6 +29,7 @@ Collate:
     'semiParametricOutput.R'
     'summariseCoeffs.R'
     'survivalDataOutput.R'
+    'validateSurvivalData.R'
 RoxygenNote: 5.0.1
 Imports:
     graphics,

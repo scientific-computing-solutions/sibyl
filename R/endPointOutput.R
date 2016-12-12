@@ -7,14 +7,31 @@ endPointsSummary <- function(object, digits){
   
   #First create values for table 
   maturityFunc <- function(time, cens){
-    if(length(time)==0) return(NA)
-    round(100*(length(cens)-sum(cens))/length(cens), digits=digits)
+    
+    #If no subjects with data then return NA
+    if(length(time)==0 || sum(!is.na(cens))==0) return(as.character(NA))
+    
+    #function to extract maturity
+    mat <- function(censorIndicators){
+      maturity <- 100*(length(censorIndicators)-sum(censorIndicators))/length(censorIndicators)
+      as.character(round(maturity, digits=digits))
+    }
+    
+    #if no missing data
+    if(!any(is.na(cens))) return(mat(cens))
+    
+    #if have missing data 
+    notMissing <- cens[!is.na(cens)]
+    fraction <- paste0("(", sum(!notMissing), "/",
+                            length(notMissing), ")")
+      
+    return(paste(mat(notMissing),fraction,sep="\n"))
   }
   
   KMFunc <- function(time, cens){
-    if(length(time)==0) return(NA)
+    if(length(time)==0 || sum(!is.na(cens))==0) return(as.character(NA))
     s <- survfit(Surv(time,!cens)~1)
-    round(100*tail(s$surv, 1),digits=digits)
+    as.character(round(100*tail(s$surv, 1),digits=digits))
   }
   
   maturityVals <- extractEndPointOutput(object, func= maturityFunc) 
@@ -96,7 +113,7 @@ extractEndPointOutput <- function(object, func){
         time <- time[theArms==arm]
         cens <- cens[theArms==arm]
         func(time,cens)  
-      }, FUN.VALUE = numeric(1))
+      }, FUN.VALUE = character(1))
       
     }))
     

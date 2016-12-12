@@ -140,6 +140,16 @@ test_that("only_appropriate_subgroup_data_is_added_to_survdata_slot",{
   
 })
 
+test_that("subjects_with_missing_endpoint_data_are_not_added_to_survdata_slot",{
+  survivalData <- createSurvivalDataObject()
+  survivalData@subject.data$ttr[1] <- NA
+  survivalData@subject.data$ttr.cens[1] <- NA
+  
+  sP <- fitSemiParametric(survivalData,endPoint="relapse",strata="race")
+  expect_equal(sP@survData@subject.data, survivalData@subject.data[2:nrow(survivalData@subject.data),])
+  
+})
+
 test_that("all_data_is_added_to_survdata_slot_if_no_subgroups",{
   survivalData <- createSurvivalDataObject()
   

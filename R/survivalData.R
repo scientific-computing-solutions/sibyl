@@ -51,6 +51,7 @@ setClass("SurvivalData",
 ##'        element should correspond to the N-th end point.
 ##' @param endPointUnit ("days", "months" or "years" - default "months") The unit of time
 ##' for the endPoint time columns
+##' @details See Vignette for further details
 ##' @return A \code{SurvivalData} object
 ##' @seealso \code{\link{SurvivalData-class}}
 ##' @export
@@ -84,11 +85,13 @@ SurvivalData <- function(data,
   }
   
   validateArm(data, armDef)
-  validateEndPoints(data, endPointNames, timeCol, censorCol)
   validateSubjects(data, subjectCol)
   validateCovariates(data, covDef)
-  validateSubgroups(data, subgroupDef)
+  validateSubgroups(data, subgroupDef, listColumnDefSlot(covDef, "columnName"))
 
+  validateEndPointCols(data, endPointNames, timeCol, censorCol)
+  validateEndPointVals(data, endPointNames, timeCol, censorCol)
+  
   # Arm is always unique, so shouldn't be a list
   if (is.list(armDef)){armDef <- armDef[[1]]}
 
@@ -96,7 +99,27 @@ SurvivalData <- function(data,
   for (col in listColumnDefSlot(subgroupDef, "columnName")){
     data[, col] <- as.logical(data[, col])
   }
-
+  
+  #Ensure timeCols are numeric 
+  for(col in timeCol){
+    data[,col] <- convertToNumeric(data, col)
+  }
+  
+  #and censorCols are logical 
+  for(col in censorCol){
+    data[,col] <- convertToLogical(data, col)
+  }
+  
+  #for each covariate convert to correct type.
+  #Categorical
+  for(cov in covDef){
+    name <- cov@columnName
+    data[,name] <- switch(cov@type,
+                          "categorical"=factor(data[, name], levels=cov@categories),
+                          "logical"=convertToLogical(data, name),
+                          "numeric"=convertToNumeric(data, name))
+  }
+  
   # Extract relevant part of raw data
   subject.data <- data[, c(subjectCol,
                            timeCol,
@@ -123,14 +146,9 @@ SurvivalData <- function(data,
   names(endPoints) <- endPointNames
 
   #set null to empty list to satisfy S4's demands
-  if(is.null(subgroupDef)){
-    subgroupDef <- list()
-  }
-
-  if(is.null(covDef)){
-    covDef <- list()
-  }
-
+  if(is.null(subgroupDef)) subgroupDef <- list()
+  if(is.null(covDef)) covDef <- list()
+  
   # Create SurvivalData object
   return(new("SurvivalData",
              subject.data = subject.data,
@@ -139,201 +157,6 @@ SurvivalData <- function(data,
              endPointUnit = endPointUnit,
              subgroupDef = subgroupDef,
              covDef = covDef))
-}
-
-
-checkColumnNameValid <- function(dataColNames, colNames){
-
-  isInvalid <- !vapply(colNames,
-                       function(x){!is.null(x) && !is.na(x) && (x %in% dataColNames)},
-                       FUN.VALUE = FALSE)
-
-  if (any(isInvalid)){
-    stop(paste0("The following column names are invalid or not found in the raw data: '",
-                paste0(colNames[isInvalid], collapse = ", ")))
-  }
-}
-
-
-validateArm <- function(data, armDef){
-
-  # Handle arm defined as list
-  if (is.list(armDef)){
-    if (length(armDef) == 1){
-      armDef <- armDef[[1]]
-    }
-    else{
-      stop(paste0("Multiple arm columns defined"))
-    }
-  }
-
-  # Only 1 arm column defined
-  armCol <- unique(armDef@columnName)
-  if (length(armCol) > 1){
-    stop(paste0("Multiple arm columns defined: ", paste0(armCol, collapse = ", "),
-                ". Arms must be defined by categorical values within a single column."))
-  }
-
-  # Arm column name is valid
-  checkColumnNameValid(colnames(data), armDef@columnName)
-
-  # Arm definition has at least two levels (one per arm)
-  if (length(armDef@categories) < 2){
-    stop(paste0("Definition of arm column '", armDef@columnName,
-                "' contains fewer than two levels. There must be one level per treatment group and at least two groups."))
-  }
-
-  # Values in arm column must match defined categories
-  categoriesNotFound <- setdiff(armDef@categories, data[, armCol])
-  if (length(categoriesNotFound) > 0){
-    stop(paste0("The following arm categories are not found in the data: ",
-                paste0(categoriesNotFound, collapse = ", ")))
-  }
-  unexpectedValues <- setdiff(data[, armCol], armDef@categories)
-  if (length(unexpectedValues) > 0){
-    stop(paste0("The following values in the arm column are not defined as arm categories: ",
-                paste0(unexpectedValues, collapse = ", ")))
-  }
-
-}
-
-
-validateEndPoints <- function(data, endPointNames, timeCol, censorCol){
-
-  # Equal numbers of event time and censor columns
-  numEndPoints <- length(endPointNames)
-  if (length(censorCol) != numEndPoints){
-    stop(paste("Different number of censor columns and end points"))
-  }
-  if (length(timeCol) != numEndPoints){
-    stop(paste("Different number of time columns and end points"))
-  }
-
-  
-  if(length(unique(endPointNames)) != numEndPoints){
-    stop("Endpoint names must be unique")
-  }
-  
-  # Unique event time and censor columns
-  if (length(unique(censorCol)) != numEndPoints){
-    stop(paste("Repeated censor columns. Each censor column must correspond to one type of end point"))
-  }
-  if (length(unique(timeCol)) != numEndPoints){
-    stop(paste("Repeated time columns. Each time column must correspond to one type of end point"))
-  }
-
-  # Column names occur in the data
-  checkColumnNameValid(colnames(data), timeCol)
-  checkColumnNameValid(colnames(data), censorCol)
-
-  # Values in censor and time columns
-  for (idx in seq(numEndPoints)){
-
-    # Censor
-    thisCensorCol <- censorCol[idx]
-
-    if (all(data[, thisCensorCol] %in% c(0,1))){
-      # Ensure logical
-      data[, thisCensorCol] <- data[, thisCensorCol] > 0.5
-    }
-    else{
-      stop(paste0("Values in censor column '", thisCensorCol, "' must be either boolean or 0/1"))
-    }
-
-    # Time
-    thisTimeCol <- timeCol[idx]
-    if (!any(is.numeric(data[, thisTimeCol]))){
-      stop("Event times must be numeric")
-    }
-    if (any( data[, thisTimeCol] <  0)){
-      stop("Event times must be non-negative")
-    }
-  }
-}
-
-
-validateSubjects <- function(data, subjectCol){
-
-  checkColumnNameValid(colnames(data), subjectCol)
-
-  subjectIds <- data[, subjectCol]
-  isDuplicate <- duplicated(subjectIds)
-
-  if(any(isDuplicate)){
-    stop(paste0("Subject ID must be unique. The following IDs are repeated: ",
-                paste0(subjectIds[isDuplicate], collapse = ", ")))
-  }
-}
-
-
-validateCovariates <- function(data, covDef){
-
-  checkColumnNameValid(colnames(data), listColumnDefSlot(covDef, "columnName"))
-
-  # Categorical covariates
-  isCategorical <- listColumnDefSlot(covDef, "type") == "categorical"
-  idxCategorical <- which(isCategorical)
-  for (idx in idxCategorical){
-
-    name <- covDef[[idx]]@columnName
-    categories <- covDef[[idx]]@categories
-
-    # Ensure factor
-    if (!is.factor(data[, name])){
-      data[, name] <- as.factor(data[, name])
-    }
-
-    # Values must match defined categories
-    uniqueValues <- levels(data[, name])
-    unmatchedValues <- setdiff(uniqueValues, categories)
-
-    if (!all(uniqueValues %in% categories)){
-      stop(paste0(" Covariate '", name, "' is categorical but values {",
-                  paste0(unmatchedValues, collapse=", "),
-                  "} do not match the defined categories {",
-                  paste0(categories, collapse=", "),
-                  "}"))
-    }
-  }
-  
-  #displayNames must be unique
-  displayNames <- listColumnDefSlot(covDef,"displayName")
-  if(length(displayNames) != length(unique(displayNames))){
-    stop("Covariate display names must all be different")   
-  }
-}
-
-
-validateSubgroups <- function(data, subgroupDef){
-
-  # Column names occur in raw data
-  subgroupCols <- listColumnDefSlot(subgroupDef, "columnName")
-  checkColumnNameValid(colnames(data), subgroupCols)
-
-  # Values in subgroup columns are logical or numeric 0/1
-  containsNa <- vapply(subgroupCols,
-                       function(col){any(is.na(data[, col]))},
-                       FUN.VALUE = FALSE)
-  isValid <- vapply(subgroupCols,
-                    function(col){all(is.logical(data[, col])) || all(data[, col] %in% c(0,1))},
-                    FUN.VALUE = FALSE)
-
-  if (any(containsNa)){
-    stop(paste0("NA values occur in the following subgroup columns: ",
-                paste0(subgroupCols[containsNa], collapse = ", ")))
-  }
-
-  if (any(!isValid)){
-    stop(paste0("Values in the following subgroup columns are neither logical nor numeric 0/1: ",
-                paste0(subgroupCols[!isValid], collapse = ", ")))
-  }
-  
-  #displayNames must be unique
-  displayNames <- listColumnDefSlot(subgroupDef,"displayName")
-  if(length(displayNames) != length(unique(displayNames))){
-    stop("Subgroup display names must all be different")   
-  }
-
 }
 
 
@@ -413,7 +236,8 @@ minOfMaxObserved <- function(object, endPointName){
                paste(names(object@endPoints),collapse=", ")))
   }
   
-  dataSplitByArm <- split(object@subject.data, object@subject.data[,object@armDef@columnName])
+  dataSplitByArm <- split(object@subject.data, 
+                          object@subject.data[,object@armDef@columnName])
   
   maxObserved <- vapply(dataSplitByArm, function(oneArmDf){
     max(oneArmDf[,object@endPoints[[endPointName]]$timeCol])

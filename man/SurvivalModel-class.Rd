@@ -17,7 +17,7 @@ and armAsFactor
 \item{\code{covariates}}{(character vector) names of covariates used}
 
 \item{\code{survData}}{(SurvivalData object) contains data for the selected subgroup
-only}
+only and only subjects with data for the given endpoint is included}
 
 \item{\code{armAsFactor}}{(logical) TRUE if arm is included in the model, FALSE if
 separate models are fit for each arm}

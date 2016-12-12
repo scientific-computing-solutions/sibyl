@@ -6,7 +6,7 @@ NULL
 ##' @slot models (list) names of model distributions fitted
 ##' @slot covariates (character vector) names of covariates used
 ##' @slot survData (SurvivalData object) contains data for the selected subgroup
-##'       only
+##'       only and only subjects with data for the given endpoint is included 
 ##' @slot armAsFactor (logical) TRUE if arm is included in the model, FALSE if
 ##'       separate models are fit for each arm
 ##' @slot survFormula (formula) formula used to fit the model
@@ -104,6 +104,11 @@ function(object,
   survData <- object
   survData@subject.data <- extractSubgroup(object@subject.data, subgroup)
 
+  #remove subjects who have missing endpoint data for the given endpoint
+  haveData <- !is.na(survData@subject.data[, endPointDef$timeCol])
+  survData@subject.data <- survData@subject.data[haveData, ] 
+  
+  
   # Create formula to fit model
   formulaToFit <- survivalFormula(armAsFactor,
                                   covariates,

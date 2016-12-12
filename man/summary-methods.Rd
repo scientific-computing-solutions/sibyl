@@ -11,7 +11,8 @@
   "FlexTable")[2], digits = 1)
 
 \S4method{summary}{SurvivalData}(object, type = c("subgroups", "endPoints",
-  "covariates")[1], digits = 1, htmlEncoding = FALSE)
+  "covariates")[1], digits = 1, htmlEncoding = FALSE,
+  meanOrMedian = c("median", "mean")[1])
 }
 \arguments{
 \item{object}{(SurvivalData object) data to be summarised}
@@ -24,6 +25,9 @@
 should be generated for the \code{SurvivalData} object}
 
 \item{htmlEncoding}{(logical) if TRUE use &plusmn instead of unicode plus minus sign}
+
+\item{meanOrMedian}{("median" or "mean") output summary function for the numeric covariates
+summary table}
 }
 \description{
 Summary methods for Sibyl objects

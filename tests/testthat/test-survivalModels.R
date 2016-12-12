@@ -57,6 +57,18 @@ test_that("subgroup_argument_fits_models_to_just_subgroup",{
   
 })
 
+test_that("subjects_with_missing_endpoint_data_are_removed_when_fitting_models",{
+  
+  survivalData <- createSurvivalDataObject()
+  survivalData@subject.data$ttr[1] <- NA
+  survivalData@subject.data$ttr.cens[1] <- NA
+  
+  fit <- fitModels(survivalData,endPoint="relapse",model="weibull")
+  expect_equal(fit@survData@subject.data, survivalData@subject.data[2:nrow(survivalData@subject.data),])
+  
+})
+
+
 test_that("requested_models_are_fitted_by_arm_when_armAsFactor_is_FALSE",{
   survivalData <- createSurvivalDataObject()
   fit <- fitModels(survivalData,endPoint="relapse",model=c("weibull","lnorm"),armAsFactor=FALSE)

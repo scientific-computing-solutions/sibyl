@@ -14,6 +14,7 @@ extractSubgroup <- function(data, subgroup){
   return(data)
 }
 
+
 # Create the formula for fitting survival models to
 # @param armAsFactor (logical) TRUE if the formula is to regress on arms,
 #        FALSE otherwise
