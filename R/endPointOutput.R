@@ -9,7 +9,7 @@ endPointsSummary <- function(object, digits){
   maturityFunc <- function(time, cens){
     
     #If no subjects with data then return NA
-    if(length(time)==0 || sum(!is.na(cens))==0) return(as.character(NA))
+    if(length(time)==0 || sum(!is.na(cens))==0) return("NA")
     
     #function to extract maturity
     mat <- function(censorIndicators){
@@ -29,7 +29,7 @@ endPointsSummary <- function(object, digits){
   }
   
   KMFunc <- function(time, cens){
-    if(length(time)==0 || sum(!is.na(cens))==0) return(as.character(NA))
+    if(length(time)==0 || sum(!is.na(cens))==0) return("NA")
     s <- survfit(Surv(time,!cens)~1)
     as.character(round(100*tail(s$surv, 1),digits=digits))
   }
@@ -45,8 +45,6 @@ endPointsSummary <- function(object, digits){
   
   numRows <- 2*length(object@endPoints) #maturity + KM for each endpoint
   numCols <- 2 + (1+numSubgroups)*numArms # for each (subgroup + all data) x for each arm
-  
-  
   
   #Then create table
   MyFTable <- FlexTable(numrow=numRows,numcol=numCols, 
@@ -65,7 +63,6 @@ endPointsSummary <- function(object, digits){
   MyFTable[seq(1,numRows,2),1] <- names(object@endPoints) 
   MyFTable[1:numRows,1] <- parProperties(text.align="left")
   MyFTable[1:numRows,1] <- textProperties(font.weight = "bold")
-  
   
   #merge cells in first column
   for(i in seq(1,numRows,2)){
@@ -112,7 +109,7 @@ extractEndPointOutput <- function(object, func){
       vapply(as.character(getArmNames(object)),function(arm){
         time <- time[theArms==arm]
         cens <- cens[theArms==arm]
-        func(time,cens)  
+        func(time, cens)
       }, FUN.VALUE = character(1))
       
     }))

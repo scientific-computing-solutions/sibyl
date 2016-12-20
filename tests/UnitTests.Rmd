@@ -1,0 +1,31 @@
+---
+title: "Unit Tests"
+author: "Nik Burkoff"
+date: "19 December 2016"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Unit Tests
+
+Following the order of creation of objects as shown in the user guide:
+
+* Testing the creation of the ColumnDef objects is found in test-columnDef.R
+* The creation of the Survival Data object is tested in test-survivalData.R
+* Checking errors are thrown when an invalid data frame/column definitions is used to create a SurvivalData object is tested in test-survivalData.R
+* (minOfMaxObserved function - only used in Sibyl Shiny App is also tested in SurvivalData.R)
+* The summary tables of the SurvivalData (covariates, subgroups and endpoints) are tested in test-survivalDataOutput.R
+* The testing of the functions to help with model fitting (extracting the correct subgroup, creating the correct model formula) is tested in test-helpFitting.R
+* The creation of the semiParametric model (including errors when invalid object is attempted to be created) are tested in test-semiParametric.R
+* The testing of the outputs aassociated with the semiParametric model (logrank test) and the extractCumHazData function (used to extract data out of the KM table) are tested in test-semiParametric.R
+* The file test-survivalModels.R tests the creation of SurvivalModel objects and that errors are thrown when invalid models are attempted to be created
+* The code used to generate the summary tables for parameter, var-covars and Cholesky are tested in test-summariseCoeffs.R and the code which tests the getDisplayRowNames function (used to get the correct names of coefficients in these tables) is tested in test-getDisplayRowNames.R
+* test-icTable.R tests the creation of the AIC/BIC table
+* test-lifeTable.R tests the creation of the life table
+* test-averageCurvePlotData.R tests the creation of the avCurvePlotData object
+
+
+Note that the creation of the data frames/matrices used to generate the FlexTable objects have been unit tested but the FlexTable creations themselves have not been tested (FlexTables are rJava objects and not testable)

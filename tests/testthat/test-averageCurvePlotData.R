@@ -127,3 +127,21 @@ test_that("KM_part_of_avcurveplot_matches_outputfromsurvfit_when_covariates_are_
 })
 
 
+test_that("normboot.flexsurvreg_ignores_subjects_with_missing_covariates",{
+  survivalData <- createSurvivalDataObject()
+  
+  #first no missing data
+  flexFit <- flexsurvreg(Surv(ttr,!ttr.cens)~arm+age, dist="weibull", data=survivalData@subject.data)
+  noMissing <- normboot.flexsurvreg(flexFit,10,newdata = survivalData@subject.data)
+  expect_equal(length(noMissing),200)
+  
+  #now remove 5 data points
+  survivalData@subject.data$age[1:5] <- NA
+  
+  missing <- normboot.flexsurvreg(flexFit,10,newdata = survivalData@subject.data)
+  expect_equal(length(missing), 195)
+  expect_equal(as.numeric(rownames(attr(missing, "X"))), 6:200)
+  
+  
+  
+})

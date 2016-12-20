@@ -101,3 +101,34 @@ test_that("factor_variable_with_missing_first_level_does_not_output_this_level",
   
   expect_equal(result, c("shape","scale","the display:C","the display:D"))
 })
+
+
+test_that("variable_called_arm_does_not_output_arm:value",{
+  df <- data.frame(time=c(5,10,34,33,22,28,79,100),
+                   cens=c(1,1,0,0,0,1,0,1),
+                   arm=c("D","B","D","D","C","D","C","C"))
+  
+  model <- flexsurvreg(Surv(time,!cens) ~ arm, data=df, dist="weibull")
+  def <- list(ColumnDef(columnName = "arm",displayName = "arm",type = "categorical",
+                        categories = factor(c("A","B","C","D"))))
+  
+  result <- getDisplayRowNames(model,def)
+  
+  expect_equal(result, c("shape","scale","C","D"))
+  
+})
+
+test_that("variable_called_arm_does_outputs_arm:value_if_keeparmDisplayName_is_true",{
+  df <- data.frame(time=c(5,10,34,33,22,28,79,100),
+                   cens=c(1,1,0,0,0,1,0,1),
+                   arm=c("D","B","D","D","C","D","C","C"))
+  
+  model <- flexsurvreg(Surv(time,!cens) ~ arm, data=df, dist="weibull")
+  def <- list(ColumnDef(columnName = "arm",displayName = "arm",type = "categorical",
+                        categories = factor(c("A","B","C","D"))))
+  
+  result <- getDisplayRowNames(model,def, keeparmDisplayName=TRUE)
+  
+  expect_equal(result, c("shape","scale","arm:C","arm:D"))
+  
+})

@@ -68,6 +68,19 @@ test_that("subjects_with_missing_endpoint_data_are_removed_when_fitting_models",
   
 })
 
+test_that("missing_covariates_behave_in_same_way_as_flexsurvreg_when_fitting_model",{
+  survivalData <- createSurvivalDataObject()
+  survivalData@subject.data$age[1] <- NA
+  fit <- fitModels(survivalData,endPoint="relapse",
+                   model="weibull",covariates="age",
+                   armAsFactor=TRUE)
+  
+  flexFit <- flexsurvreg(Surv(ttr,!ttr.cens)~arm+age, dist="weibull", data=survivalData@subject.data)
+  
+  expect_equal( coefficients(flexFit), coefficients(fit@models$weibull[[1]]))
+
+})
+
 
 test_that("requested_models_are_fitted_by_arm_when_armAsFactor_is_FALSE",{
   survivalData <- createSurvivalDataObject()

@@ -90,7 +90,7 @@ setMethod("summary", signature(object="SemiParametricModel"),
       sum(as.character(object@survData@subject.data$arm)==x)
     },FUN.VALUE=numeric(1))
             
-    armHeaders <- paste(armNames,"\n(n=",armCounts,")",sep="")
+    armHeaders <- paste(armNames,"\n(total=",armCounts,")",sep="")
             
     if(length(armNames)==2){
       armHeaders <- c(armHeaders,"Ratio", "Difference")

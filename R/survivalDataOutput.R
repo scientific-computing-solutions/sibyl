@@ -59,7 +59,7 @@ extractSubgroupTable <- function(object){
   results <- do.call("rbind",retVal)
   rownames(results) <- as.character(object@armDef@categories)
   
-  colnames(results) <- c("n",listColumnDefSlot(object@subgroupDef,"displayName"))
+  colnames(results) <- c("Total",listColumnDefSlot(object@subgroupDef,"displayName"))
   t(results)
 }
 
@@ -134,7 +134,7 @@ getHeaders <- function(subgroupDetails, leftCol1, leftCol2){
   rownames(subgroupDetails)[1] <- "All" 
   
   #First row
-  headerNames <- paste("(n=",rowSums(subgroupDetails),")",sep="")
+  headerNames <- paste("\n(total=",rowSums(subgroupDetails),")",sep="")
   headerNames <- paste(rownames(subgroupDetails), headerNames)
   
   hR <- FlexRow(c(leftCol1,headerNames),colspan=c(leftSpan,rep(numArms,1+numSubgroups)), 
@@ -144,11 +144,11 @@ getHeaders <- function(subgroupDetails, leftCol1, leftCol2){
   #then arm header (second header row)
   armHeaders <- vapply(seq_len(nrow(subgroupDetails)),
                        function(x){
-                         paste(colnames(subgroupDetails),"\n(n=",subgroupDetails[x,],")",sep="")  
+                         paste(colnames(subgroupDetails),"\n(total=",subgroupDetails[x,],")",sep="")  
                        },FUN.VALUE=character(numArms))
   
   hR2 <- FlexRow(c(leftCol2,armHeaders),
-                 par.properties=parProperties(text.align="left",padding=1),
+                 par.properties=parProperties(text.align="center",padding=1),
                  text.properties = textProperties(font.weight = "bold"))
   
   return(list(hR,hR2))

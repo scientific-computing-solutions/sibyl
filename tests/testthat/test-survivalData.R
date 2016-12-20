@@ -107,6 +107,49 @@ test_that("can_create_SurvivalData_with_a_subject_with_empty_string_for_endpoint
   
 })
 
+test_that("can_create_SurvivalData_with_missing_covariates",{
+  data("sibylData")
+  
+  inputs <- survivalDataConstuctorTestSetUp()
+  
+  sibylData$age[1] <- NA
+  sibylData$race[5] <- as.factor(NA)
+  
+  survivalData <- SurvivalData(data=sibylData,
+                               armDef=inputs$arm,
+                               subjectCol="ID",
+                               covDef=inputs$cov,
+                               endPointNames="relapse",
+                               censorCol="ttr.cens",
+                               timeCol="ttr")
+  expect_true(is.numeric(survivalData@subject.data$age))
+  expect_true(is.factor(survivalData@subject.data$race))
+  expect_equal(levels(survivalData@subject.data$race),c("black","hispanic","other","white"))
+  
+})
+
+test_that("can_create_SurvivalData_with_empty_strings_as_covariates",{
+  data("sibylData")
+  
+  inputs <- survivalDataConstuctorTestSetUp()
+  
+  sibylData$age[1] <- ""
+  sibylData$race <- as.character(sibylData$race)
+  sibylData$race[5] <- ""
+  
+  survivalData <- SurvivalData(data=sibylData,
+                               armDef=inputs$arm,
+                               subjectCol="ID",
+                               covDef=inputs$cov,
+                               endPointNames="relapse",
+                               censorCol="ttr.cens",
+                               timeCol="ttr")
+  expect_true(is.numeric(survivalData@subject.data$age))
+  expect_true(is.factor(survivalData@subject.data$race))
+  expect_equal(levels(survivalData@subject.data$race),c("black","hispanic","other","white"))
+  
+})
+
 
 context("SurvivalData_invalid_arguments")
 

@@ -212,7 +212,8 @@ The use.facet argument determines whether arms are plotted on on the same, or di
 
 <<>>=
 plot(sP, type="KM", n.at.risk=TRUE, 
-     pch=NA, col=1:2, conf.int=FALSE)
+     pch=NA, col=1:2, conf.int=FALSE, 
+     labels=c("patchOnly","combination"))
 
 plot(sP, type="CumHaz", use.facet=FALSE,
      logTime=FALSE)

@@ -15,7 +15,7 @@ setGeneric( "summariseCoeffs", function(object, ...) standardGeneric( "summarise
 ##' This option is ignored if class is not 'FlexTable'
 ##' @export
 setMethod( "summariseCoeffs","SurvivalModel",
-  function(object, class=c("matrix","FlexTable")[2], digits=3){
+  function(object, class=c("matrix","FlexTable")[2], digits=5){
    
     #get covariate and arm column definitions for calculating the rownames of the output table
     columnDetails <- c(list(object@survData@armDef),object@survData@covDef)
@@ -44,7 +44,7 @@ setGeneric("getCholeskyDecomp",function(object,...) standardGeneric("getCholesky
 ##' This option is ignored if class is not 'FlexTable'
 ##' @export
 setMethod("getCholeskyDecomp","SurvivalModel",
-  function(object,  class=c("matrix","FlexTable")[2], digits=3){
+  function(object,  class=c("matrix","FlexTable")[2], digits=5){
             
     #get covariate and arm column definitions for calculating the rownames of the output table
     columnDetails <- c(list(object@survData@armDef),object@survData@covDef)
@@ -76,7 +76,7 @@ setGeneric("vcov",function(object,...) standardGeneric("vcov"))
 ##' This option is ignored if class is not 'FlexTable'
 ##' @export
 setMethod("vcov","SurvivalModel",
-  function(object,  class=c("matrix","FlexTable")[2], digits=3){
+  function(object,  class=c("matrix","FlexTable")[2], digits=5){
     
     #get covariate and arm column definitions for calculating the rownames of the output table
     columnDetails <- c(list(object@survData@armDef),object@survData@covDef)
@@ -304,7 +304,8 @@ getDistributionDisplayNames <- function(modelNames){
 #model - an individual fitted model
 #columnDetails is the list of the treatment arm and covariate ColumnDef objects used to replace
 #column names with the display names for the FlexTable outputs
-getDisplayRowNames <- function(model, columnDetails){
+#keeparmDisplayName - if TRUE then output arm:xyz if FALSE then output xyz
+getDisplayRowNames <- function(model, columnDetails, keeparmDisplayName=FALSE){
   
   originalNames <- rownames(model$res)
   
@@ -317,11 +318,13 @@ getDisplayRowNames <- function(model, columnDetails){
   #loop over each covariate/coefficient
   for(covName in attributes(model$data$m)$covnames.orig){
     
-    #get displayName
-    displayName <- columnDetails[[which(columnNames==covName)]]@displayName
-    
     #get type
     colType <- columnDetails[[which(columnNames==covName)]]@type
+    
+    #get displayName
+    displayName <- if(keeparmDisplayName || covName != "arm")
+      columnDetails[[which(columnNames==covName)]]@displayName
+    else ""
     
     numReplace <- 1
     #if factor replacing more 
@@ -333,7 +336,10 @@ getDisplayRowNames <- function(model, columnDetails){
     replacedNames <- substr(replacedNames,nchar(covName)+1,nchar(replacedNames))
     
     sepChar <- if(colType != "numeric") ":" else ""
-    replacedNames <- paste(displayName,replacedNames,sep = sepChar)
+    if(covName == "arm" && !keeparmDisplayName){
+      sepChar <- ""
+    }
+    replacedNames <- paste(displayName, replacedNames, sep = sepChar)
     
     newNames <- c(newNames, replacedNames)
     

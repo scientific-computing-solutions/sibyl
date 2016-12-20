@@ -54,13 +54,15 @@ createCovariateSummarySubTable <- function(object, requiredTypes, digits, htmlEn
   MyFTable[1:numRows,3:numCols] <- ans
   
   #firstColumn
-  firstCol <- unlist(mapply(rep,listColumnDefSlot(object@covDef,"displayName"), each=numRowsFromCov))
+  firstCol <- unlist(lapply(seq_along(numRowsFromCov),function(i){
+    rep(object@covDef[[i]]@displayName,numRowsFromCov[i])
+  }))
   MyFTable[1:numRows,1] <- firstCol
   #merge cells in first column with same value
   MyFTable <- spanFlexTableRows(MyFTable, j = 1, runs = as.character(firstCol))
   
   #second Column
-  MyFTable[1:numRows,2] <- unlist(lapply(object@covDef,typeSpecificValues$secondColFunction ))
+  MyFTable[1:numRows,2] <- unlist(lapply(object@covDef,typeSpecificValues$secondColFunction))
   
   MyFTable[1:numRows,1:2] <-  parProperties(text.align="left")
   MyFTable[1:numRows,1] <- textProperties(font.weight = "bold")
@@ -203,11 +205,17 @@ extractCovariateOutput <- function(object, func, requiredTypes){
       }
       
       #for each arm
-      vapply(as.character(getArmNames(object)),function(arm){
+      oneArmRes <- vapply(as.character(getArmNames(object)),function(arm){
         covVals <- covVals[theArms==arm]
         func(covVals)  
       }, FUN.VALUE = character(numberOfRowsNeeded(cov,requiredTypes)))
       
+      if(class(oneArmRes)=="character"){
+        oneArmRes <- matrix(oneArmRes, nrow=1)
+      }
+      
+      oneArmRes  
+        
     })
     
     ans <- do.call("cbind",ans)
@@ -226,6 +234,7 @@ extractCovariateOutput <- function(object, func, requiredTypes){
 #with their own level "(no data)" for output in covariate table and converts
 #logical variables to factors TRUE, FALSE
 convertMissingFactorsToOwnLevel <- function(object){
+  
   for(idx in seq_along(object@covDef)){
     
     cov <- object@covDef[[idx]]
