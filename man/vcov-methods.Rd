@@ -10,7 +10,7 @@
 vcov(object, ...)
 
 \S4method{vcov}{SurvivalModel}(object, class = c("matrix", "FlexTable")[2],
-  digits = 3)
+  digits = 5)
 }
 \arguments{
 \item{object}{(SurvivalModel object) contains fitted models with estimated

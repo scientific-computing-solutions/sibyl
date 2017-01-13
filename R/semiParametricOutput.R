@@ -7,12 +7,25 @@ NULL
 ##' @param class ('data.frame' or "FlexTable' (default)) type of output for summary table
 ##' @export
 setMethod("summary", signature(object="SemiParametricModel"),
-  function(object, class=c("data.frame","FlexTable")[2], digits=1){
+  function(object, type=c("medianTTE", "KM")[1], class=c("data.frame","FlexTable")[2], 
+           digits=if(type=="medianTTE") 1 else 5){
     
     if(length(class) != 1 || !class %in% c("data.frame","FlexTable")){
       stop("Invalid class argument, should be 'data.frame' or 'FlexTable")
     }
     
+    if(length(type)!=1 || !type %in% c("medianTTE", "KM") ){
+      stop("Invalid type argument must be one of 'medianTTE' or 'KM'")
+    }
+    
+    if(length(digits)!=1 || !is.numeric(digits) || !digits > 0 || is.infinite(digits) ||
+       is.na(digits)){
+      stop("Invalid digits argument")
+    } 
+    
+    if(type=="KM"){
+      return(kmsummary(object, class, digits))
+    }
     
     #calculate the median time to event with confidence interval
     results <- as.data.frame(quantile(object@km,prob=0.5,conf.int = TRUE))
@@ -108,6 +121,46 @@ setMethod("summary", signature(object="SemiParametricModel"),
 })
 
 
+#function to output the KM summary for the SemiParametricModel
+kmsummary <- function(object, class, digits){
+  
+  #get summary
+  s <- summary(object@km, censored=TRUE)
+  #coerce to data frame
+  summaryData <- data.frame(arm=s$strata,time=s$time,survival=s$surv,
+                            n.risk=s$n.risk,n.event=s$n.event, std.err=s$std.err,
+                            x=s$lower, y=s$upper)
+  colnames(summaryData)[7:8] <- paste(c("lower","upper"), "95% CI")
+  
+  #split by arm
+  listOfData <- split(summaryData, summaryData$arm)
+  
+  #set names of list elements as arms
+  names(listOfData) <-  as.character(getArmNames(object@survData))
+  
+  #remove arm column from data frames
+  listOfData <- lapply(names(listOfData), function(arm){
+     listOfData[[arm]]$arm <- NULL
+     listOfData[[arm]]
+  })
+  
+  #set names of list elements as arms 
+  names(listOfData) <-  as.character(getArmNames(object@survData))
+  
+  if(class=="data.frame") return(listOfData)
+  
+  #create flextable
+  retVal <- lapply(listOfData, function(oneArmData){
+    FlexTable(round(oneArmData,digits=digits),
+              body.par.props=parProperties(text.align="right"),
+              header.text.props = textProperties(font.weight = "bold"),
+              body.cell.props = cellProperties(padding.right=1))
+  })
+  
+  names(retVal) <-  as.character(getArmNames(object@survData))
+  retVal 
+}
+
 ##' Plot methods for Sibyl package
 ##' @rdname plot-methods
 ##' @aliases plot,SemiParametricModel,missing-method
@@ -115,10 +168,14 @@ setMethod("summary", signature(object="SemiParametricModel"),
 ##' @param type (character) the type of plot to be created; one of "KM",
 ##'        "CumHaz", "LoglogS", "LogoddS" or "InvNormS"
 ##' @param logTime (logical) determines if x axis of plot is time or log(time)
+##' @param armColours (vector of colours) the colours for the treatment arms for all
+##' graphs except the KM curve (use the col argument to set the colour for the KM graph)
 ##' @param ... arguments to be passed to azplot.km when type = "KM"
 ##' @export
 setMethod("plot", signature(x="SemiParametricModel", y="missing"),
-  function(x, type=c("KM","CumHaz","LoglogS","LogoddS","InvNormS")[1], use.facet=TRUE, logTime=NULL, ...){
+  function(x, type=c("KM","CumHaz","LoglogS","LogoddS","InvNormS")[1], 
+           use.facet=TRUE, logTime=NULL, 
+           armColours=c("black", "red", "blue", "green", "yellow", "orange"), ...){
             
     #set defualt logTime
     if(is.null(logTime)){
@@ -127,10 +184,10 @@ setMethod("plot", signature(x="SemiParametricModel", y="missing"),
             
     switch(tolower(type),
            "km"=kmPlot(x, ...),
-           "cumhaz"=diagnosticPlot(x,logTime, yval="-log(S)", use.facet, cumHaz=TRUE),
-           "loglogs"=diagnosticPlot(x, logTime, yval="log(-log(S))", use.facet),
-           "logodds"=diagnosticPlot(x, logTime, yval="log(S/(1-S))",  use.facet),
-           "invnorms"=diagnosticPlot(x, logTime, yval="qnorm(1-S)", use.facet),
+           "cumhaz"=diagnosticPlot(x,logTime, yval="-log(S)", use.facet, cumHaz=TRUE, armColours=armColours),
+           "loglogs"=diagnosticPlot(x, logTime, yval="log(-log(S))", use.facet, armColours=armColours),
+           "logodds"=diagnosticPlot(x, logTime, yval="log(S/(1-S))",  use.facet, armColours=armColours),
+           "invnorms"=diagnosticPlot(x, logTime, yval="qnorm(1-S)", use.facet, armColours=armColours),
            stop("type must equal one of KM, CumHaz, LoglogS or Logodds or InvNorms")
     )
   }
@@ -150,7 +207,7 @@ kmPlot <- function(x, ...){
 #as a function of S, the cumulative hazard, for example "log(S/(1-S))"
 #use.facet is TRUE if splitting the data into separate graphs per arm
 #cumHaz is true if we are outputting cumulative hazard plot
-diagnosticPlot <- function(x, logTime, yval, use.facet, cumHaz=FALSE){
+diagnosticPlot <- function(x, logTime, yval, use.facet, cumHaz=FALSE, armColours){
   
   #R-cmd-check thinks t, s, model, ... are global
   #variables inside the ggplot commands so complains about them
@@ -187,12 +244,12 @@ diagnosticPlot <- function(x, logTime, yval, use.facet, cumHaz=FALSE){
   p <- ggplot(data, aes_string(color="Arm",x=xval,y=yval))
   
   # Set colour for each arm
-  armColours <- c("black", "red", "blue", "green", "yellow", "orange")
   if (length(armNames) <= length(armColours)){
     p <- p + scale_colour_manual(values = armColours)
   }
   else{
-    stop("plot() supports a maximum of 6 arms")
+    stop("The current value of armColours parameter supports a maximum of ",length(armColours)," arms. ",
+         "Use armColours argument to choose colours for each arm")
   }
   
   #Add facet

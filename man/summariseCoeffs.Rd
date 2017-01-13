@@ -9,7 +9,7 @@
 summariseCoeffs(object, ...)
 
 \S4method{summariseCoeffs}{SurvivalModel}(object, class = c("matrix",
-  "FlexTable")[2], digits = 3)
+  "FlexTable")[2], digits = 5)
 }
 \arguments{
 \item{object}{(SurvivalModel object) contains fitted models to be summarised}

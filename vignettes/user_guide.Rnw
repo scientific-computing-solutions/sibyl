@@ -123,6 +123,7 @@ subgroupSummary <- summary(my.data,type="subgroups")
 endPointsSummary <- summary(my.data,type="endPoints", digits=2)
 covariatesSummary <- summary(my.data,type="covariates", 
                              meanOrMedian="mean")
+covMaturity <- summary(my.data,type="covarMaturity")
 @
 
 These objects are FlexTables and they can be imported into a ReporteRs Word document:
@@ -132,6 +133,9 @@ print(endPointsSummary)
 
 print(covariatesSummary$numeric)
 print(covariatesSummary$categorical)
+
+print(names(covMaturity))
+
 @
 
 
@@ -191,8 +195,15 @@ print(coxphLogRankTest(sP))
 
 The median time to event for these models can be obtained using the summary method (setting `class' to `FlexTable' will output a table for including in a word document):
 <<>>=
-summary(sP, class="data.frame")
+summary(sP, class="data.frame", type="medianTTE")
 @
+
+The KM summary tables are also available (again setting `class' to `FlexTable' will output a table for including in a word document which could be imported into Excel)
+<<>>=
+kmSummary <- summary(sP, class="data.frame", type="KM")
+head(kmSummary$patchOnly)
+@
+
 
 Three types of plot are available:
 \begin{itemize}
@@ -218,7 +229,7 @@ plot(sP, type="KM", n.at.risk=TRUE,
 plot(sP, type="CumHaz", use.facet=FALSE,
      logTime=FALSE)
 
-plot(sP, type="loglogs", use.facet=TRUE)
+plot(sP, type="loglogs", use.facet=TRUE, armColours=c("blue","green"))
 @
 The KM option displays slightly differently from the other options because it uses the \texttt{azGraphics} package rather than \texttt{ggplot2}. The extra arguments given make its appearance similar to the others'. For more information see the help file available via \texttt{help(azplot.km)}.
 
@@ -320,6 +331,19 @@ names(models.withArm@models)
 @
 Note, as before, if a subgroup has been used then only the appropriate subset of the data is found inside the SurvivalModel object and subjects who do not have data for the selected endpoint are also removed.
 
+To help decide which spline model to include we can use the \texttt{createSplineAICTable} function to fit multiple spline models simultaneously:
+
+<<>>=
+splineAICTable <- createSplineAICTable(models.withArm, 
+                     k=2:4,
+                     scale=c("hazard","odds","normal"),
+                     class="data.frame")
+
+splineAICTable
+@
+
+If \texttt{class} is set to FlexTable then a FlexTable object is output ready for inclusion in a reprteRs Word document.  
+
 \subsection{Properties and parameter estimates}
 Once parametric models have been fitted, we can calculate and display properties such as the estimated value of coefficients:
 <<>>=
@@ -386,6 +410,21 @@ lifeTableByArm <- createLifeTable(models.byArm,
                                   times = seq(0, 20, 4), 
                                   class="data.frame")
 print(lifeTableByArm)
+@
+
+By setting class to `FlexTable' a formatted table for inclusion in a Word document is produced.
+
+
+\subsection{Restricted Means}
+
+The \texttt{calcModelRmst} function will calculate the restricted mean for the fitted models provided \texttt{armAsFactor=FALSE} and there were no covariates used to fit the model:
+
+<<>>=
+modelRmsts <- calcModelRmst(models.byArm, model="exponential", 
+                            times=c(0,2,3,10,Inf),
+                            class="data.frame")
+
+print(modelRmsts)
 @
 
 By setting class to `FlexTable' a formatted table for inclusion in a Word document is produced.

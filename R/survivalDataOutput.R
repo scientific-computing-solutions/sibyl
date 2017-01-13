@@ -2,17 +2,18 @@
 ##' @name summary
 ##' @rdname summary-methods
 ##' @aliases summary,SurvivalData-method
-##' @param object (SurvivalData object) data to be summarised
-##' @param type (one of "subgroups", "endpoints", "covariates") which output table
-##' should be generated for the \code{SurvivalData} object
+##' @param object (SurvivalData or SemiParametricModel object) data to be summarised
+##' @param type (one of "subgroups", "endpoints", "covariates", "covarMaturity") which output table
+##' should be generated for the \code{SurvivalData} object OR (one of "medianTTE" or "KM") if 
+##' object is of type SemiParametricModel
 ##' @param digits (numeric, default 1) number of decimal places for the output
 ##' @param htmlEncoding (logical) if TRUE use &plusmn instead of unicode plus minus sign 
 ##' @param meanOrMedian ("median" or "mean") output summary function for the numeric covariates
 ##' summary table
 ##' @export
 setMethod("summary", signature(object="SurvivalData"),
-  function(object, type=c("subgroups","endPoints","covariates")[1], digits=1, htmlEncoding=FALSE,
-           meanOrMedian=c("median","mean")[1]){
+  function(object, type=c("subgroups","endPoints","covariates", "covarMaturity")[1], 
+           digits=1, htmlEncoding=FALSE, meanOrMedian=c("median","mean")[1]){
 
   if(length(meanOrMedian) != 1 || !meanOrMedian %in% c("median","mean")){
     stop("meanOrMedian argument must be 'mean' or 'median")
@@ -27,8 +28,9 @@ setMethod("summary", signature(object="SurvivalData"),
                 "subgroups" = subgroupsSummary(object) ,
                 "endpoints" = endPointsSummary(object, digits=digits),
                 "covariates" = covariatesSummary(object, htmlEncoding, meanOrMedian),
+                "covarmaturity" = covariatesMaturitySummary(object),
                  stop("Invalid type argument must be one of 'subgroups', 'endpoints'
-                      or 'covariates'"))
+                      or 'covariates' or 'covarMaturity'"))
 })
 
 

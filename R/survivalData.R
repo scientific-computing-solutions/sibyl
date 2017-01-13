@@ -265,3 +265,39 @@ maxObservedTime <- function(object, endPointName){
   }
   max(object@subject.data[,object@endPoints[[endPointName]]$timeCol])
 }
+
+
+
+##' Output details of subjects with zero times
+##' for any endpoint
+##' @param object (SurvivalData object)
+##' @return (character) containing details of subjects with zero times
+##' or NULL if no {subject, endpoint} pairs with zero times
+##' @export
+getZeroTimes <- function(object){
+  if(class(object)!="SurvivalData"){
+    stop("object must be a SurvivalData object")  
+  }
+  
+  #for each subject
+  retVal <- apply(object@subject.data, 1, function(oneSubject){
+    
+    #for each endpoint
+    oneSubjectDetails <- lapply(names(object@endPoints), 
+      function(endPointName){
+        endPoint <- object@endPoints[[endPointName]]
+        
+        #if time = 0 
+        if(!is.na(oneSubject[endPoint$timeCol]) && as.numeric(oneSubject[endPoint$timeCol])==0){
+          ans <- paste("WARNING: Subject",trimws(oneSubject["subject"]),"has time=0 for endpoint", endPointName)
+          if(!as.logical(trimws(oneSubject[endPoint$censorCol]))) ans <- paste(ans, "and had an event")
+          ans  
+        }    
+      })
+    
+    paste(unlist(oneSubjectDetails), collapse="\n")
+  })
+  
+  if(all(retVal=="")) return(NULL)
+  paste(retVal[retVal!=""],collapse="\n")
+}

@@ -11,7 +11,7 @@ matrix}
 getCholeskyDecomp(object, ...)
 
 \S4method{getCholeskyDecomp}{SurvivalModel}(object, class = c("matrix",
-  "FlexTable")[2], digits = 3)
+  "FlexTable")[2], digits = 5)
 }
 \arguments{
 \item{object}{(SurvivalModel object) contains fitted models with estimated

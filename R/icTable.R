@@ -27,6 +27,10 @@ setMethod("createIcTable","SurvivalModel",
     if(length(class) != 1 || !class %in% c("data.frame","FlexTable")){
       stop("Invalid class argument, should be 'data.frame' or 'FlexTable")
     }
+    if(length(digits)!=1 || !is.numeric(digits) || !digits > 0 || is.infinite(digits) ||
+       is.na(digits)){
+      stop("Invalid digits argument")
+    }  
     
     #create ICTable data frame
     icValues <- internalGetICTable(object)

@@ -203,7 +203,7 @@ test_that("extractCovariateOutput_keeps_order_of_categories",{
                                covDef=covariateDef)
   
   #dummy summary function outputting the string "1" for all results
-  f <- function(covVals){
+  f <- function(covVals, cens){
     #coerce logical to factor for the analysis
     if(is.logical(covVals)){
       covVals <- factor(covVals, levels=c(TRUE,FALSE)) 
@@ -217,7 +217,7 @@ test_that("extractCovariateOutput_keeps_order_of_categories",{
   
   #have to change logical covariate to categorical 
   survivalData <- convertMissingFactorsToOwnLevel(survivalData)
-  result <- extractCovariateOutput(survivalData, func=f, requiredTypes = c("logical","categorical"))
+  result <- extractCovariateOutput(survivalData, func=f, requiredTypes = c("logical","categorical"),endPoint=NULL)
   
   expect_equal(rownames(result),c("TRUE","FALSE","white","black","hispanic","other"))
   
@@ -244,12 +244,12 @@ test_that("subgroup_as_a_covariate_sets_percent_as_100_in_table",{
                                covDef=covariateDef)
   
   #summary function to get the number and percentage
-  f <- getTypeSpecificValues(FALSE, digits=2, requiredTypes=c("categorical","logical"))$summaryFunc
+  f <- getTypeSpecificValues(FALSE, digits=2, endPoint=NULL)$summaryFunc
   
   #have to change logical covariate to categorical 
   survivalData <- convertMissingFactorsToOwnLevel(survivalData)
   
-  result <- extractCovariateOutput(survivalData, func=f, requiredTypes = c("logical","categorical"))
+  result <- extractCovariateOutput(survivalData, func=f, requiredTypes = c("logical","categorical"), endPoint=NULL)
 
   expect_equal(result[1,3], "100 (42)") #male patchOnly = 100%
   expect_equal(result[1,4], "100 (42)") # male combination = 0
@@ -257,3 +257,16 @@ test_that("subgroup_as_a_covariate_sets_percent_as_100_in_table",{
   expect_equal(result[2,4], "0 (0)") #not male combination = 0
 })
 
+
+test_that("covariate_maturity_summary_function_calculates_maturity",{
+  fn <- categoricalMaturityTypeSpecific()$summaryFunc
+  
+  vals <- c("A","B","A","B","C","A","C","C","A")
+  vals <- factor(vals,levels=c("A","B","C","D"))
+  cens <- c(TRUE,FALSE,NA,FALSE,NA,FALSE,NA,NA,TRUE)
+  
+  ans <- c("1/3","2/2","-/0","-/0")
+  names(ans) <- c("A","B","C","D")  
+  
+  expect_equal(fn(vals,cens), ans)
+})

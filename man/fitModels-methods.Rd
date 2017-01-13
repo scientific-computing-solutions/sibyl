@@ -4,7 +4,7 @@
 \name{fitModels}
 \alias{fitModels}
 \alias{fitModels,SurvivalData-method}
-\alias{fitModels,SurvivalModel-methods}
+\alias{fitModels,SurvivalData-methods}
 \title{Method to create the \code{SurvivalModel} object}
 \usage{
 fitModels(object, ...)
@@ -15,7 +15,7 @@ fitModels(object, ...)
   modelOptions = NULL, preferredPackage = getDefaultPackage())
 }
 \arguments{
-\item{object}{\code{SurvivalModel} contains data to be fitted}
+\item{object}{\code{SurvivalData} contains data to be fitted}
 
 \item{...}{additional arguments for specific instances of this generic}
 

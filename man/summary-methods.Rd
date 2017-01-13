@@ -7,22 +7,24 @@
 \alias{summary,SurvivalData-method}
 \title{Summary methods for Sibyl objects}
 \usage{
-\S4method{summary}{SemiParametricModel}(object, class = c("data.frame",
-  "FlexTable")[2], digits = 1)
+\S4method{summary}{SemiParametricModel}(object, type = c("medianTTE",
+  "KM")[1], class = c("data.frame", "FlexTable")[2], digits = if (type ==
+  "medianTTE") 1 else 5)
 
 \S4method{summary}{SurvivalData}(object, type = c("subgroups", "endPoints",
-  "covariates")[1], digits = 1, htmlEncoding = FALSE,
+  "covariates", "covarMaturity")[1], digits = 1, htmlEncoding = FALSE,
   meanOrMedian = c("median", "mean")[1])
 }
 \arguments{
-\item{object}{(SurvivalData object) data to be summarised}
+\item{object}{(SurvivalData or SemiParametricModel object) data to be summarised}
+
+\item{type}{(one of "subgroups", "endpoints", "covariates", "covarMaturity") which output table
+should be generated for the \code{SurvivalData} object OR (one of "medianTTE" or "KM") if 
+object is of type SemiParametricModel}
 
 \item{class}{('data.frame' or "FlexTable' (default)) type of output for summary table}
 
 \item{digits}{(numeric, default 1) number of decimal places for the output}
-
-\item{type}{(one of "subgroups", "endpoints", "covariates") which output table
-should be generated for the \code{SurvivalData} object}
 
 \item{htmlEncoding}{(logical) if TRUE use &plusmn instead of unicode plus minus sign}
 

@@ -291,9 +291,9 @@ getDistColours <- function(modelNames){
            gompertz="purple",
            gengamma="cyan",
            gengamma.orig="cyan",
-           spline="yellow",
+           spline="brown",
            logistic="blue",
-           gaussian="brown",
+           gaussian="yellow",
            genf="pink",
            genf.orig="pink",
            "red" #default if other

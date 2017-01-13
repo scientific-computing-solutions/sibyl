@@ -1,6 +1,6 @@
 #' @importFrom graphics legend lines par
 #' @importFrom methods new show slot
-#' @importFrom stats AIC BIC as.formula predict quantile formula median sd update.formula extractAIC resid
+#' @importFrom stats AIC BIC as.formula predict quantile formula median sd update.formula extractAIC resid integrate
 #' @importFrom utils str tail
 #' @import flexsurv
 #' @import ggplot2

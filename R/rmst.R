@@ -1,5 +1,138 @@
-##' @include semiParametric.R
+##' @include semiParametric.R survivalModels.R
 NULL
+
+
+##' Method to calculate model restricted means
+##' @name calcModelRmst
+##' @rdname calcModelRmst-methods
+##' @param object (SurvivalModel) A survival model - note there cannot be 
+##' any covariates and armAsFactor must be FALSE
+##' @param ... additional arguments for this generic  
+##' @return (data.frame or FlexTable)
+##' @export
+setGeneric("calcModelRmst", function(object, ...){
+  standardGeneric("calcModelRmst")
+})
+
+
+##' @name calcModelRmst
+##' @aliases calcModelRmst,SurvivalModel-method
+##' @rdname calcModelRmst-methods
+##' @param model (character) The name of the model for which to calculate the restricted mean
+##' @param times (nuermic vector) times to calculate the restricted mean
+##' @param class ('data.frame' or "FlexTable' (default)) type of output required
+##' @param digits (numeric default=3) if outputting a FlexTable then the number of digits
+##' to round the entries to
+##' @export
+setMethod("calcModelRmst", "SurvivalModel", 
+  function(object, model, times, class=c("data.frame","FlexTable")[2], digits=3, ...){
+  
+    #validation
+    if(object@armAsFactor){
+      stop("Cannot calculate restricted means if armAsFactor is TRUE")
+    }
+    if(length(object@covariates)!=0){
+      stop("Cannot calculate restricted means if covariates fitted in model")
+    }
+    
+    if(any(!is.numeric(times) | times < 0)){
+      stop("Times must be numeric and non-negative")
+    }
+    
+    if(length(class) != 1 || !class %in% c("data.frame","FlexTable")){
+      stop("Invalid class argument, should be 'data.frame' or 'FlexTable")
+    }
+    
+    if(length(digits)!=1 || !is.numeric(digits) || !digits > 0 || is.infinite(digits) ||
+       is.na(digits)){
+      stop("Invalid digits argument")
+    } 
+    
+    if(length(model)!=1 || !model %in% names(object@models)){
+      stop("Invalid model argument must be one of ",
+           paste(names(object@models),collapse=","))
+    }
+    
+    
+    #for each arm
+    rmsts <- lapply(object@models[[model]],function(oneModel){
+      
+      #get the cdf function
+      tempF <- oneModel$dfns$p
+      
+      #if spline need to add the knots argument for the dfns$p function to work
+      args <- list()
+      if(!is.null(oneModel$knots)){
+        args$knots <- oneModel$knots  
+      }  
+      
+      #survival function
+      survFn <- function(x){
+        1 - do.call("tempF", c(args, list(q=x), oneModel$res[,"est"]))
+      }
+      
+      #calculate restricted means (an optimization would be to 
+      #not handle times indpendently but calculate [0,t1], [t1, t2], ... and
+      #sum them up as needed)
+      vapply(times, function(time){
+          tryCatch(
+            integrate(survFn, 0, time)$value,
+            error=function(cond) NA
+          )  
+        },
+        FUN.VALUE = numeric(1))
+      })
+    
+    rmsts <- as.data.frame(do.call("rbind",rmsts))
+    colnames(rmsts) <- NULL
+    
+    #if two arms add a difference row
+    if(nrow(rmsts)==2){
+      rmsts <- rbind(rmsts,difference=as.numeric(rmsts[2,])-as.numeric(rmsts[1,]) )
+    }
+    
+    #Add row of times
+    rmsts <- rbind(time=times, rmsts)
+    
+    if(class=="data.frame") return(rmsts)
+    
+    #create FlexTable
+    numRows <- nrow(rmsts)
+    numCols <- 1+ncol(rmsts)
+    
+    MyFTable <- MyFTable <- FlexTable(numrow=numRows,numcol=numCols, 
+                                      body.par.props=parProperties(text.align="right"),
+                                      header.text.props = textProperties(font.weight = "bold"),
+                                      body.cell.props = cellProperties(padding.right=1))
+    
+    #Set borders
+    MyFTable[1:numRows,1:numCols,side='bottom'] <- borderProperties(width=0)
+    MyFTable[1:numRows,1:numCols,side='left'] <- borderProperties(width=0)
+    MyFTable[1:numRows,1:numCols,side='top'] <- borderProperties(width=0)
+    MyFTable[1:numRows,1:numCols,side='right'] <- borderProperties(width=0)
+    
+    MyFTable[numRows,1:numCols,side='bottom'] <- borderProperties(width=3)
+    MyFTable[1,1:numCols,side='top'] <- borderProperties(width=3)
+    MyFTable[2,1:numCols,side='top'] <- borderProperties(width=3)
+    
+    #Add in data to table  
+    MyFTable[2:numRows,2:numCols] <- round(rmsts[2:numRows,], digits=digits)
+    MyFTable[1,2:numCols] <- times
+    MyFTable[1:numRows, 1] <- rownames(rmsts)
+    
+    #Add header denoting which distribution
+    hR <- FlexRow(paste(getDistributionDisplayNames(model),"model: restricted means"),
+                   colspan = numCols,
+                   par.properties=parProperties(text.align="center",padding=1),
+                   cell.properties = cellProperties(border.width = 0),
+                   text.properties = textProperties(font.weight = "bold"))
+    
+    MyFTable <- addHeaderRow(MyFTable,hR)
+    
+    MyFTable
+  }
+)
+
 
 ##' Method to calculate RMST on subset of data contained in a
 ##' SemiParametricModel object

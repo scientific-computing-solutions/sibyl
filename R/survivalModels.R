@@ -29,13 +29,13 @@ setClass("SurvivalModel",
 ##' Method to create the \code{SurvivalModel} object
 ##' @name fitModels
 ##' @rdname fitModels-methods
-##' @param object \code{SurvivalModel} contains data to be fitted
+##' @param object \code{SurvivalData} contains data to be fitted
 ##' @param ... additional arguments for specific instances of this generic
 ##' @return A \code{SurvivalModel} object
 setGeneric( "fitModels", function(object,...) standardGeneric( "fitModels" ))
 
 ##' @rdname fitModels-methods
-##' @aliases fitModels,SurvivalModel-methods
+##' @aliases fitModels,SurvivalData-methods
 ##' @param armAsFactor (logical) TRUE if arm is to be included in the model,
 ##'        FALSE if separate models are to be fitted for each arm
 ##' @param covariates (character vector) names of covariates to use

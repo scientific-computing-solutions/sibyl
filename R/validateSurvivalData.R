@@ -130,6 +130,8 @@ convertToNumeric <- function(data, thisCol){
   thisColData <- data[, thisCol]
   
   if(class(thisColData)%in% c("factor","logical")){
+    if(all(is.na(thisColData))) return(rep(as.numeric(NA,length(thisColData))))   
+    
     stop(paste0("Values in '", thisCol,
                 "' must be either numeric or empty and cannot be",
                 " logical or a factor"))   

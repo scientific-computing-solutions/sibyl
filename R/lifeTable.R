@@ -334,10 +334,14 @@ calcParametricLifeTable <- function(mod, oneArmData, times, Nsim, outputCI=FALSE
 
   ##get the unparameterized-model cdf
   tmp.f <- mod$dfns$p
-  ##create our cdf function:
+  ##create our cdf function - splines need knots argument
   cdf <- function(params){do.call(tmp.f, c(list(times), params))}
-
-
+  if(!is.null(mod$knots)){
+    cdf <- function(params){do.call(tmp.f, c(list(times, knots=mod$knots), params))} 
+  }
+  
+  
+  
   #for each simulation:
   simulationResults <- apply(sim.params, 1, function(oneSimulation){
 

@@ -5,12 +5,16 @@ NULL
 # This outputs two tables: one for categorical and one for numeric data
 covariatesSummary <- function(object, htmlEncoding, meanOrMedian){
   
+  #Need to replace <NA> in categorical and logical with a "missing data" level
+  #for output in table and converts logical covariates to factors for output
+  object <- convertMissingFactorsToOwnLevel(object)
+  
   numericCovariatesTable <- createCovariateSummarySubTable(object,
                                                            "numeric", digits=1,
                                                            htmlEncoding, meanOrMedian)
   
   categoricalCovariatesTable <- createCovariateSummarySubTable(object,
-                                                               c("categorical", "logical"),
+                                                               "categorical",
                                                                digits=2,
                                                                htmlEncoding, meanOrMedian)
   
@@ -19,12 +23,36 @@ covariatesSummary <- function(object, htmlEncoding, meanOrMedian){
 }
 
 
-#create either the categorical or the numeric summary table
-createCovariateSummarySubTable <- function(object, requiredTypes, digits, htmlEncoding, meanOrMedian){
+#Create the covariatesMaturity table
+covariatesMaturitySummary <- function(object){
   
   #Need to replace <NA> in categorical and logical with a "missing data" level
   #for output in table and converts logical covariates to factors for output
   object <- convertMissingFactorsToOwnLevel(object)
+  
+  #if no categorical covariates then return NULL
+  if(length(object@covDef)==0 || !any(listColumnDefSlot(object@covDef,"type") =="categorical")){
+    return(NULL)
+  }
+  
+  
+  retVal <- lapply(names(object@endPoints),function(endPointName){
+    createCovariateSummarySubTable(object,
+                                   "categorical",
+                                   digits=1, 
+                                   htmlEncoding=NULL,
+                                   meanOrMedian=NULL,   
+                                   endPoint=object@endPoints[[endPointName]]) 
+  })
+  names(retVal) <- names(object@endPoints)
+  retVal
+}
+
+
+#create either the categorical or the numeric summary table
+#if endPoint is not NULL then we are calculating a covariate-Maturity summary table for the
+#given endpoint, otherwise we are calculating the standard covariates table
+createCovariateSummarySubTable <- function(object, requiredTypes, digits, htmlEncoding, meanOrMedian, endPoint=NULL){
   
   numRowsFromCov <- vapply(object@covDef, numberOfRowsNeeded, requiredTypes, FUN.VALUE = numeric(1))
   
@@ -33,8 +61,8 @@ createCovariateSummarySubTable <- function(object, requiredTypes, digits, htmlEn
   
   #get objects which depend on whether this is the numeric or categorical
   #summary table
-  typeSpecificValues <- getTypeSpecificValues("numeric" %in% requiredTypes, digits, requiredTypes, htmlEncoding,
-                                              meanOrMedian)
+  typeSpecificValues <- getTypeSpecificValues("numeric" %in% requiredTypes, digits, htmlEncoding,
+                                              meanOrMedian, endPoint)
   
   
   #create FlexTable
@@ -50,7 +78,7 @@ createCovariateSummarySubTable <- function(object, requiredTypes, digits, htmlEn
                         body.cell.props = cellProperties(padding.right=1))
   
   #calculate table values
-  ans <- extractCovariateOutput(object,typeSpecificValues$summaryFunc,requiredTypes)
+  ans <- extractCovariateOutput(object,typeSpecificValues$summaryFunc,requiredTypes, endPoint)
   MyFTable[1:numRows,3:numCols] <- ans
   
   #firstColumn
@@ -80,11 +108,13 @@ createCovariateSummarySubTable <- function(object, requiredTypes, digits, htmlEn
   
   
   #Add footer
-  fR3 <- FlexRow(c("",typeSpecificValues$outputFooterString),
+  if(typeSpecificValues$outputFooterString != ""){
+    fR3 <- FlexRow(c("",typeSpecificValues$outputFooterString),
                  colspan=c(2,numCols-2),
                  par.properties=parProperties(text.align="center",padding=1))
   
-  MyFTable <- addFooterRow(MyFTable,fR3)
+    MyFTable <- addFooterRow(MyFTable,fR3)
+  }
   
   MyFTable
 }
@@ -100,93 +130,14 @@ numberOfRowsNeeded <- function(covDef, requiredTypes){
 }  
 
 
-#set appropriate summary function,
-#footer row string (to be displayed in last row of table)
-#secondColFunction - the function used to generate the second column
-#of the table (the units or category values)
-getTypeSpecificValues <- function(isNumericTable, digits, requiredTypes, htmlEncoding, meanOrMedian){
-  if(isNumericTable){
-    
-    pm <- if(htmlEncoding) "&plusmn;" else "\U00B1" 
-    
-    summaryFunc <- function(covVals){
-      if(length(covVals)==0 || sum(!is.na(covVals))==0){
-        return("NA")
-      }
-      
-      numberMissing <- sum(is.na(covVals))
-      if(numberMissing > 0){
-        missingString <- paste0("\n[", numberMissing,"]")
-      }
-      else{
-        missingString <- ""
-      }
-      
-      if(meanOrMedian=="mean"){
-        mu <- round(mean(covVals,na.rm = TRUE),digits)
-        ste <- round(se(covVals, na.rm = TRUE), digits)  
-        return(paste(mu," (", pm, ste,")", missingString, sep=""))
-      }
-      
-      media <- round(median(covVals,na.rm = TRUE), digits)
-      q1 <- round(quantile(covVals,probs = 0.25, na.rm = TRUE), digits)
-      q3 <- round(quantile(covVals,probs = 0.75, na.rm = TRUE), digits)
-      paste(media, " [", q1, ",", q3,"]",missingString, sep="")
-    }
-    
-    if(meanOrMedian=="mean"){
-      outputFooterString <- paste("Output: mean (", pm, "se)\n [#missing - if any]",sep="")
-    }
-    else{
-      outputFooterString <- "Output: median [Q1, Q3]\n [#missing - if any]"                      
-    }
-                            
-    secondColFunction <- function(covDef){
-      if(covDef@type %in% requiredTypes ) return(covDef@unit)
-    }
-    
-    leftCol2Header <-"Unit"
-  }
-  else{ #if categorical table (logical has been set to categorical)
-    summaryFunc <- function(covVals){
-      
-      #named vector of results one per category
-      vapply(levels(covVals),function(x){
-        if(length(covVals)==0){
-          return("NA (0)")
-        }
-        perCent <- round(100*sum(covVals==x)/length(covVals),digits)
-        paste(perCent," (",sum(covVals==x),")",sep="")
-      },character(1))
-    }
-    
-    outputFooterString <- "Output: % (n)" 
-    
-    secondColFunction <- function(covDef){
-      levels(covDef@categories)
-    }
-    
-    leftCol2Header <-""
-  }
-  
-  return(
-    list(leftCol2Header=leftCol2Header,
-         secondColFunction=secondColFunction,
-         outputFooterString=outputFooterString,
-         summaryFunc=summaryFunc)
-  )
-  
-}
-
-
-
 #Given a survivalData object output a dataframe, rows for covariates
 #if numeric or rows for single category of categorical covariate 
 #columns for treatment arms, first all data then subgroup 1 then subgroup 2
 #with values calculated using the summary function func
-#which takes in the values of the covariate 
+#which takes in the values of the covariate (and the censoring indicator for the
+#given endPoint if endPoint is not NULL) 
 #for subjects in the appropriate arm and subgroup
-extractCovariateOutput <- function(object, func, requiredTypes){
+extractCovariateOutput <- function(object, func, requiredTypes, endPoint){
   
   #For each covariate
   retVal <- lapply(object@covDef, function(cov){
@@ -195,6 +146,8 @@ extractCovariateOutput <- function(object, func, requiredTypes){
     
     covVals <- object@subject.data[,cov@columnName]
     theArms <- object@subject.data$arm
+    cens <- if(!is.null(endPoint)) object@subject.data[,endPoint$censorCol] else NULL
+  
     
     #for each subgroup and "ALL" for everyone
     ans <- lapply(c("ALL",listColumnDefSlot(object@subgroupDef,"columnName")),function(subgroup){
@@ -202,12 +155,16 @@ extractCovariateOutput <- function(object, func, requiredTypes){
       if(subgroup != "ALL"){
         covVals <- covVals[object@subject.data[,subgroup]]
         theArms <- theArms[object@subject.data[,subgroup]]
+        if(!is.null(cens)){
+          cens <- cens[object@subject.data[,subgroup]]
+        }
       }
       
       #for each arm
       oneArmRes <- vapply(as.character(getArmNames(object)),function(arm){
         covVals <- covVals[theArms==arm]
-        func(covVals)  
+        cens <- if(!is.null(cens)) cens[theArms==arm] else NULL
+        func(covVals, cens)  
       }, FUN.VALUE = character(numberOfRowsNeeded(cov,requiredTypes)))
       
       if(class(oneArmRes)=="character"){
