@@ -9,7 +9,7 @@
 \usage{
 \S4method{summary}{SemiParametricModel}(object, type = c("medianTTE",
   "KM")[1], class = c("data.frame", "FlexTable")[2], digits = if (type ==
-  "medianTTE") 1 else 5)
+  "medianTTE") 2 else 5)
 
 \S4method{summary}{SurvivalData}(object, type = c("subgroups", "endPoints",
   "covariates", "covarMaturity")[1], digits = 1, htmlEncoding = FALSE,

@@ -13,7 +13,7 @@ getTypeSpecificValues <- function(isNumericTable, digits, htmlEncoding, meanOrMe
   }  
   
   if(!is.null(endPoint)){ #covariate-maturity table
-    return(categoricalMaturityTypeSpecific())  
+    return(categoricalMaturityTypeSpecific(digits))  
   }
   
   #if categorical table (logical has been set to categorical)
@@ -22,7 +22,7 @@ getTypeSpecificValues <- function(isNumericTable, digits, htmlEncoding, meanOrMe
 }
 
 #typeSpecific values for the covariate maturity table
-categoricalMaturityTypeSpecific <- function(){
+categoricalMaturityTypeSpecific <- function(digits){
   summaryFunc <- function(covVals, cens){
     
     #named vector of results one per category
@@ -38,7 +38,7 @@ categoricalMaturityTypeSpecific <- function(){
       
       #if no subjects with given {endpoint, covariate value}
       if(length(censThisCovValue)==0 || all(is.na(censThisCovValue))){
-        return("-/0")
+        return("-/0\n-")
       }
       
       #Number censored
@@ -47,7 +47,10 @@ categoricalMaturityTypeSpecific <- function(){
       #Number with events
       numEvent <- sum(!censThisCovValue,na.rm=TRUE)  
       
-      paste(numEvent,"/",numEvent+numCens,sep="")
+      #maturity
+      maturity <- 100*numEvent/(numEvent+numCens)
+      
+      paste(numEvent,"/",numEvent+numCens,"\n",round(maturity, digits) ,"%",sep="")
     
     },character(1))
   }

@@ -84,7 +84,7 @@ test_that("SemiParametricModelObjects_can_be_created_with_KM_and_Cox_fitted_appr
   expect_equal(sP@km, km)
   
   #Cox:
-  cox <- coxph(Surv(ttr,!ttr.cens) ~ arm, data=survivalData@subject.data, ties="breslow")
+  cox <- coxph(Surv(ttr,!ttr.cens) ~ arm, data=survivalData@subject.data, ties="breslow", model=TRUE)
   cox$call <- sP@cox$call
   expect_equal(sP@cox, cox)
   
@@ -103,7 +103,7 @@ test_that("SemiParametricModelObjects_can_be_created_with_covariates",{
   expect_equal(sP@km, km)
   
   #Cox:
-  cox <- coxph(Surv(ttr,!ttr.cens) ~ arm+age+race, data=survivalData@subject.data, ties="breslow")
+  cox <- coxph(Surv(ttr,!ttr.cens) ~ arm+age+race, data=survivalData@subject.data, ties="breslow", model=TRUE)
   cox$call <- sP@coxWithStrata$call
   expect_equal(sP@coxWithStrata, cox)
   
@@ -124,7 +124,7 @@ test_that("SemiParametricModelObjects_can_be_created_with_subgroups_and_strata",
   expect_equal(sP@km, km)
   
   #Cox:
-  cox <- coxph(Surv(ttr,!ttr.cens) ~ arm+strata(race), data=df, ties="breslow")
+  cox <- coxph(Surv(ttr,!ttr.cens) ~ arm+strata(race), data=df, ties="breslow", model=TRUE)
   cox$call <- sP@coxWithStrata$call
   expect_equal(sP@coxWithStrata, cox)
 })
@@ -202,7 +202,7 @@ test_that("number_of_events_is_correctly_calculated",{
   numEvents <- c(patchOnly=nrow(subgroupData[subgroupData$arm=="patchOnly" & !subgroupData$ttr.cens,]),
                  combination=nrow(subgroupData[subgroupData$arm=="combination" & !subgroupData$ttr.cens,]))
   
-  expect_equal(summarysP[1,1:2],numEvents)
+  expect_equal(summarysP[1,2:1],numEvents)
   
 })
 

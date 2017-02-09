@@ -20,7 +20,7 @@ createLifeTable(object, ...)
 
 \item{times}{(numeric vector) times at which to evaluate life table}
 
-\item{modelToUse}{(character) name of model to base life table upon. If
+\item{modelToUse}{(character vector) name of models to base life table upon. If
 NULL, the model with lowest AIC is chosen}
 
 \item{Nsim}{(numeric) number of simulations used to estimate the average

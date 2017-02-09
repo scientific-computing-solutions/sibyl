@@ -75,7 +75,7 @@ test_that("endpoint_summary_has_only_'all'_column_if_no_subgroups",{
   expect_equal(result$numcol,2+2) #2 header columns then 2 All columns
 })
 
-test_that("endpoint_summaryt_has_two_rows_per_endpoint",{
+test_that("endpoint_summary_has_two_rows_per_endpoint",{
   data("sibylData")
   
   inputs <- survivalDataConstuctorTestSetUp()
@@ -104,7 +104,7 @@ test_that("extractEndPointOutput_uses_func_as_summary_function",{
   ans <- t(data.frame(relapse=as.character(rep(0.568,6)),
                     newEndpoint=as.character(rep(0.568,6))))
   
-  colnames(ans) <- rep(c("patchOnly","combination"),3)
+  colnames(ans) <- rep(c("combination","patchOnly"),3)
   expect_equal(ans, result)
   
 })
@@ -121,10 +121,10 @@ test_that("extractEndPointOutput_with_func_as_maturity_calculates_maturity",{
   #isMale maturity:
   #Number in each arm who had events in subgroup male
   isMaleData <- survivalData@subject.data[survivalData@subject.data$sub.isMale,]
-  maturityIsMale <- as.character(c(sum(!isMaleData$ttr.cens & isMaleData$arm == "patchOnly"),
-                      sum(!isMaleData$ttr.cens & isMaleData$arm == "combination")))
+  maturityIsMale <- as.character(c(sum(!isMaleData$ttr.cens & isMaleData$arm == "combination"),
+                      sum(!isMaleData$ttr.cens & isMaleData$arm == "patchOnly")))
   
-  names(maturityIsMale) <- c("patchOnly","combination")
+  names(maturityIsMale) <- c("combination","patchOnly")
   
   expect_equal(result[1,3:4],maturityIsMale)
 })
@@ -259,13 +259,13 @@ test_that("subgroup_as_a_covariate_sets_percent_as_100_in_table",{
 
 
 test_that("covariate_maturity_summary_function_calculates_maturity",{
-  fn <- categoricalMaturityTypeSpecific()$summaryFunc
+  fn <- categoricalMaturityTypeSpecific(digits=1)$summaryFunc
   
   vals <- c("A","B","A","B","C","A","C","C","A")
   vals <- factor(vals,levels=c("A","B","C","D"))
   cens <- c(TRUE,FALSE,NA,FALSE,NA,FALSE,NA,NA,TRUE)
   
-  ans <- c("1/3","2/2","-/0","-/0")
+  ans <- c("1/3\n33.3%","2/2\n100%","-/0\n-","-/0\n-")
   names(ans) <- c("A","B","C","D")  
   
   expect_equal(fn(vals,cens), ans)

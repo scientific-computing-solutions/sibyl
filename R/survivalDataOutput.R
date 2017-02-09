@@ -28,7 +28,7 @@ setMethod("summary", signature(object="SurvivalData"),
                 "subgroups" = subgroupsSummary(object) ,
                 "endpoints" = endPointsSummary(object, digits=digits),
                 "covariates" = covariatesSummary(object, htmlEncoding, meanOrMedian),
-                "covarmaturity" = covariatesMaturitySummary(object),
+                "covarmaturity" = covariatesMaturitySummary(object, digits=digits),
                  stop("Invalid type argument must be one of 'subgroups', 'endpoints'
                       or 'covariates' or 'covarMaturity'"))
 })
@@ -84,7 +84,7 @@ subgroupsSummary <- function(object, colWidth=1.5){
   
   #Add in data
   for(thisRow in 1:numRows){
-    MyFTable[thisRow, 2:numCols] <- df[thisRow,1:(numCols-1)]
+    MyFTable[thisRow, 2:numCols] <- df[thisRow,(numCols-1):1]
     MyFTable[thisRow,1] <- rownames(df)[thisRow]
   } 
   
@@ -106,7 +106,8 @@ subgroupsSummary <- function(object, colWidth=1.5){
                 cell.properties = cellProperties(border.top.width=3, border.bottom.width=0,
                                                  border.left.width=0, border.right.width=0)
   )
-  hR2 <- FlexRow(c("",as.character(object@armDef@categories)),par.properties=parProperties(text.align="center",padding=1),
+  hR2 <- FlexRow(c("",rev(as.character(object@armDef@categories))),
+                 par.properties=parProperties(text.align="center",padding=1),
                  text.properties = textProperties(font.weight = "bold"),
                  cell.properties = cellProperties(border.width=0)
   )
@@ -142,6 +143,10 @@ getHeaders <- function(subgroupDetails, leftCol1, leftCol2){
   hR <- FlexRow(c(leftCol1,headerNames),colspan=c(leftSpan,rep(numArms,1+numSubgroups)), 
                 par.properties=parProperties(text.align="center"),
                 text.properties = textProperties(font.weight = "bold"))
+  
+  #reverse order so that control arm is last (done this way so works if 1 row) 
+  subgroupDetails[,1:ncol(subgroupDetails)] <- subgroupDetails[,ncol(subgroupDetails):1]
+  colnames(subgroupDetails) <- rev(colnames(subgroupDetails))
   
   #then arm header (second header row)
   armHeaders <- vapply(seq_len(nrow(subgroupDetails)),

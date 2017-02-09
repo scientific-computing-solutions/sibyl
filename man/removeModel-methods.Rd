@@ -16,7 +16,9 @@ removeModel(object, ...)
 
 \item{...}{additional arguments for specific instances of this generic}
 
-\item{modelName}{(list of character strings) names of models to be removed}
+\item{modelName}{(list of character strings) names of models to be removed. To remove
+specific spline model should include the number of knots and scale. For example, to remove
+the spline model with 5 knots and scale = hazard, should use \code{spline_5_hazard}}
 }
 \value{
 a \code{SurvivalModel} object

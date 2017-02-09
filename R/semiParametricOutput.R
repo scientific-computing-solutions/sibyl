@@ -8,7 +8,7 @@ NULL
 ##' @export
 setMethod("summary", signature(object="SemiParametricModel"),
   function(object, type=c("medianTTE", "KM")[1], class=c("data.frame","FlexTable")[2], 
-           digits=if(type=="medianTTE") 1 else 5){
+           digits=if(type=="medianTTE") 2 else 5){
     
     if(length(class) != 1 || !class %in% c("data.frame","FlexTable")){
       stop("Invalid class argument, should be 'data.frame' or 'FlexTable")
@@ -51,6 +51,13 @@ setMethod("summary", signature(object="SemiParametricModel"),
             
     #transpose to get arms as columns
     results <- t(results)
+    
+    #reorder
+    armNames <- as.character(getArmNames(object@survData))
+    numArms <- length(armNames)
+    
+    results[,1:numArms] <- results[,numArms:1]
+    colnames(results)[1:numArms] <- colnames(results)[numArms:1]
             
     if(class=="data.frame"){
       return(results)
@@ -59,10 +66,7 @@ setMethod("summary", signature(object="SemiParametricModel"),
     #Now create Flex Table        
     numRows <- 4
     numCols <- 1 + ncol(results)
-            
-    armNames <- as.character(getArmNames(object@survData))
-    numArms <- length(armNames)
-            
+   
     MyFTable <- FlexTable(numrow=numRows,numcol=numCols, 
                           body.par.props=parProperties(text.align="right"),
                           header.text.props = textProperties(font.weight = "bold"),
@@ -106,7 +110,7 @@ setMethod("summary", signature(object="SemiParametricModel"),
     armHeaders <- paste(armNames,"\n(total=",armCounts,")",sep="")
             
     if(length(armNames)==2){
-      armHeaders <- c(armHeaders,"Ratio", "Difference")
+      armHeaders <- c(rev(armHeaders),"Ratio", "Difference")
     }
             
     hR <- FlexRow(c("",armHeaders),

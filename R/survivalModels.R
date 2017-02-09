@@ -166,15 +166,16 @@ internalFitModels <- function(model, modelOptions, preferredPackage, formulaToFi
   })
 
   # Name the models with the matching distribution
-  names(fittedModels) <- model
-
+  #if spline then add k_scale values to end of model name
+  names(fittedModels) <- addSplineOptionsToName(model, modelOptions)
+  
   #Next remove models which produced errors
   #successful models
   successfulModelNames <- NULL
   successfulModels <- list()
   
   #for loop not lapply as need to build up successfulModelNames
-  for(modelName in model){
+  for(modelName in names(fittedModels)){
     if(class(fittedModels[[modelName]]) !="character"){
       successfulModelNames <- c(successfulModelNames, modelName)
       successfulModels[[modelName]] <- fittedModels[[modelName]]
@@ -186,8 +187,24 @@ internalFitModels <- function(model, modelOptions, preferredPackage, formulaToFi
   return(successfulModels)
 }
 
-
-
+#take vector of names (llogis, spline, gompertz) and return
+# llogis, spline_5_hazard, gompertz if modelOption$spline has 5 knots and
+#scale = hazard
+addSplineOptionsToName <- function(modelNames, modelOptions){
+  
+  if(is.null(modelOptions) || is.null(modelOptions$spline)){
+    splineVal <- list() 
+  }
+  else{splineVal <- modelOptions$spline}
+  
+  #defaults from flexsurvspline
+  if(is.null(splineVal$k)) splineVal$k <- 0
+  if(is.null(splineVal$scale)) splineVal$scale="hazard"
+  
+  ifelse(modelNames!="spline",modelNames, paste("spline",splineVal$k,
+                                    tolower(splineVal$scale),sep="_"))
+}
+  
 ##' Method to remove fitted models from a SurvivalData object
 ##' @name removeModel
 ##' @rdname removeModel-methods
@@ -198,7 +215,9 @@ setGeneric("removeModel", function(object, ...) standardGeneric("removeModel"))
 
 ##' @rdname removeModel-methods
 ##' @aliases removeModel,SurvivalModel-methods
-##' @param modelName (list of character strings) names of models to be removed
+##' @param modelName (list of character strings) names of models to be removed. To remove
+##' specific spline model should include the number of knots and scale. For example, to remove
+##' the spline model with 5 knots and scale = hazard, should use \code{spline_5_hazard}
 ##' @export
 setMethod("removeModel", signature(object = "SurvivalModel"),
 function(object, modelName){
@@ -259,10 +278,13 @@ setMethod("addModel", signature = c("SurvivalModel"),
 function(object, modelName, modelOptions=NULL, preferredPackage = getDefaultPackage(),suppressOverwriteWarning=FALSE){
 
   # Match model names case-insensitively
-  modelName <- lapply(modelName, tolower)
+  modelName <- tolower(modelName)
+
+  modelNamesIncludeSplineSuffix <- addSplineOptionsToName(modelName, modelOptions)
 
   # Warn if over-write existing models
-  isDuplicate <- vapply(modelName, function(n){n %in% names(object@models)}, FUN.VALUE = FALSE)
+  isDuplicate <- vapply(modelNamesIncludeSplineSuffix, 
+                        function(n){n %in% names(object@models)}, FUN.VALUE = FALSE)
   if (any(isDuplicate) && !suppressOverwriteWarning){
     duplicateNames <- modelName[isDuplicate]
     warning(paste0("The following models have already been fitted and (if new models are successfully 

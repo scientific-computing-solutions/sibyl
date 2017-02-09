@@ -12,7 +12,7 @@ setGeneric("createLifeTable", function(object,  ...) standardGeneric("createLife
 ##' @rdname createLifeTable-methods
 ##' @aliases createLifeTable,SurvivalModel-methods
 ##' @param times (numeric vector) times at which to evaluate life table
-##' @param modelToUse (character) name of model to base life table upon. If
+##' @param modelToUse (character vector) name of models to base life table upon. If
 ##'        NULL, the model with lowest AIC is chosen
 ##' @param Nsim (numeric) number of simulations used to estimate the average
 ##'        curve - only used when models includes covariates
@@ -44,21 +44,22 @@ setMethod("createLifeTable", signature(object="SurvivalModel"),
     
 
     # Check required model has been fitted
-    if (!any(vapply(names(object@models),
-       function(x){x == modelToUse}, FUN.VALUE = TRUE))){
-         stop(paste0("Model '", modelToUse, "' has not been fitted"))
-       }
+    for(modelName in modelToUse){
+      if(!any(vapply(names(object@models),
+      function(x){x == modelName}, FUN.VALUE = TRUE))){
+         stop(paste0("Model '", modelName, "' has not been fitted. ",
+                     "The fitted models are: ",
+                     paste(names(object@models),collapse=", ")))
+      }
+    }
 
     # Validate times
     if (any(!is.numeric(times) | times < 0)){
       stop("Times must be numeric and non-negative")
     }
 
-    # Extract fits of this model to each arm
-    modelFits <- object@models[[modelToUse]]
-
     # Construct life table for this model
-    lifeTable <- calcLifeTable(modelFits, object@survData@subject.data, object@endPointDef, times, modelToUse, Nsim,
+    lifeTable <- calcLifeTable(object@models, object@survData@subject.data, object@endPointDef, times, modelToUse, Nsim,
                                object@armAsFactor, length(object@covariates)!=0, getArmNames(object@survData), B)
 
     if(class=="data.frame"){
@@ -68,12 +69,13 @@ setMethod("createLifeTable", signature(object="SurvivalModel"),
     #create FlexTable
     arms <- as.character(getArmNames(object@survData))
     numRows <- length(times)
-    numCols <- 1+2*length(arms)
+    numCols <- 1+(length(tableHeading)+1)*length(arms)
     
-    MyFTable <- MyFTable <- FlexTable(numrow=numRows,numcol=numCols, 
-                                      body.par.props=parProperties(text.align="right"),
-                                      header.text.props = textProperties(font.weight = "bold"),
-                                      body.cell.props = cellProperties(padding.right=1))
+    
+    MyFTable <- FlexTable(numrow=numRows,numcol=numCols, 
+                          body.par.props=parProperties(text.align="right"),
+                          header.text.props = textProperties(font.weight = "bold"),
+                          body.cell.props = cellProperties(padding.right=1))
     
     #Add data to table
     MyFTable[1:numRows,1] <- times
@@ -81,23 +83,26 @@ setMethod("createLifeTable", signature(object="SurvivalModel"),
     oneTime <- split(lifeTable, lifeTable$t)
     lapply(seq_along(oneTime), function(i){
       df <- oneTime[[i]]
-      ans <- round(c(df$KM,df$S), digits=digits)
+      df[1:nrow(df),] <- df[nrow(df):1,]
+      ans <- unlist(round(df[colnames(df)%in% c("KM",tableHeading)], digits=digits))
       MyFTable[i,2:numCols] <- ifelse(is.na(ans),"", ans)
     })
     
+    
+    
     #Add headers
-    hR <- FlexRow(c("time", rep(arms,2)),
+    hR <- FlexRow(c("time", rep(rev(arms),1+length(tableHeading))),
                   par.properties=parProperties(text.align="center",padding=1),
                   text.properties = textProperties(font.weight = "bold"))
     
     hR2 <- FlexRow(c("", "Kaplan Meier",getDistributionDisplayNames(tableHeading)),
-                   colspan = c(1,length(arms), length(arms)),
+                   colspan = c(1,rep(length(arms),length(tableHeading)+1)),
                    par.properties=parProperties(text.align="center",padding=1),
                    text.properties = textProperties(font.weight = "bold"))
     
     MyFTable <- addHeaderRow(MyFTable,hR2)
     MyFTable <- addHeaderRow(MyFTable,hR)
-
+    
     MyFTable
 })
 
@@ -126,17 +131,17 @@ getBestModel <- function(object){
   names(which(as.list(AICSums)== AICSumMin)[1])
 }
 
-# modelFits: list of model fit to each arm
+# allModelFits: list of list of model fits from SurvivalModel object
 # times: vector, times at which to evaluate the life table
 # modelToUse: string; name of the parametric model used
 #Nsim number of simulations (if simulating)
 #armAsFactor: logical is the model included in the arm?
 #useCovariates: logical does the model include covariates
 #B: see summary.flexsurvreg 
-calcLifeTable <- function(modelFits, subjectData, endPointDef, times,
+calcLifeTable <- function(allModelFits, subjectData, endPointDef, times,
                           modelToUse, Nsim, armAsFactor, useCovariates, armNames,
                           B){
-
+  
   # Ensure times in ascending order
   times <- sort(times)
 
@@ -148,27 +153,46 @@ calcLifeTable <- function(modelFits, subjectData, endPointDef, times,
   KMLifeTables <- calcInterpolatedKMLifeTable(kmValuesByArm, times)
 
   #Now calculate life table for given modelfits:
-
-  #Apply calcParametricLifeTable to each {modelFits, dataByArm} pair,
-  #if there is only one modelFit (as it is was fitted with arm as factor)
-  #it is reused for each arm
-  if(useCovariates){
-    #split data by arm
-    dataByArm <- split(subjectData, subjectData[, "arm"])
-    parametricLifeTables <- mapply(calcParametricLifeTable, mod=modelFits, oneArmData=dataByArm,
+  #returns a list (one per distribution) of lists (one per arm)  
+  parametricLifeTables <- lapply(modelToUse, function(modelName){
+  
+    # Extract fits of this model to each arm
+    modelFits <- allModelFits[[modelName]]
+  
+    #Apply calcParametricLifeTable to each {modelFits, dataByArm} pair,
+    #if there is only one modelFit (as it is was fitted with arm as factor)
+    #it is reused for each arm
+    if(useCovariates){
+      #split data by arm
+      dataByArm <- split(subjectData, subjectData[, "arm"])
+      parametricLifeTables <- mapply(calcParametricLifeTable, mod=modelFits, oneArmData=dataByArm,
                               MoreArgs=list(times=times,Nsim=Nsim), SIMPLIFY = FALSE)
-  }
-  else{
-    parametricLifeTables <- mapply(calcLifeTableNoCovariates, mod=modelFits, armName=armNames,
+    }
+    else{
+      parametricLifeTables <- mapply(calcLifeTableNoCovariates, mod=modelFits, armName=armNames,
                                    MoreArgs=list(times=times,armAsFactor=armAsFactor,B=B), SIMPLIFY = FALSE)  
-  }
+    }
     
-  names(parametricLifeTables) <- names(KMLifeTables)
-
+    #change column name from S to model name
+    parametricLifeTables <- lapply(parametricLifeTables, function(df){
+      colnames(df)[colnames(df)=="S"] <- modelName
+      df
+    })
+    
+    names(parametricLifeTables) <- names(KMLifeTables)
+    parametricLifeTables
+  })
+  
   #merge the parametric and KM lifetables together
-  mergedTables <- mapply(merge, KMLifeTables, parametricLifeTables,
+  mergedTables <- mapply(merge, KMLifeTables, parametricLifeTables[[1]],
                           MoreArgs=list(by="t"), SIMPLIFY=FALSE)
-
+  
+  if(length(parametricLifeTables) > 1){
+    for(i in 2:length(parametricLifeTables))
+      mergedTables <- mapply(merge, mergedTables, parametricLifeTables[[i]],
+                             MoreArgs=list(by="t"), SIMPLIFY=FALSE) 
+  }
+  
   #bind the different arms into the same data frame
   results <- data.frame(do.call("rbind",mergedTables))
   rownames(results) <- NULL

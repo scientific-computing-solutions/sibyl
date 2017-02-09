@@ -50,7 +50,7 @@ setMethod("calcModelRmst", "SurvivalModel",
     
     if(length(model)!=1 || !model %in% names(object@models)){
       stop("Invalid model argument must be one of ",
-           paste(names(object@models),collapse=","))
+           paste(names(object@models),collapse=", "))
     }
     
     
@@ -121,7 +121,7 @@ setMethod("calcModelRmst", "SurvivalModel",
     MyFTable[1:numRows, 1] <- rownames(rmsts)
     
     #Add header denoting which distribution
-    hR <- FlexRow(paste(getDistributionDisplayNames(model),"model: restricted means"),
+    hR <- FlexRow(paste(getDistributionDisplayNames(model),"\nrestricted means"),
                    colspan = numCols,
                    par.properties=parProperties(text.align="center",padding=1),
                    cell.properties = cellProperties(border.width = 0),

@@ -27,7 +27,8 @@ createAvCurvePlotData(object, ...)
 calculating averaged survival curves - default NULL implies use all}
 
 \item{seed}{(numeric, default NULL) if not NULL then set random seed (although it will only be
-used if models include covariates) - only used when models includes covariates}
+used if models include covariates) - random numbers are used when models includes covariates 
+or when confidence intervals are required}
 
 \item{B}{(integer) Only used when no covariates in model. See summary.flexsurvreg 
 Number of simulations from the normal asymptotic distribution of the estimates used 

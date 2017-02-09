@@ -248,6 +248,14 @@ plot(coxSnellres$time, -log(coxSnellres$surv),
 abline(0,1, col="red", lty=2 )
 @
 
+As can the Schoenfeld residuals (no statra are used in the model fit):
+<<,fig.height=4, fig.width=4>>=
+schoenfeld <- schoenfeldResiduals(sP)
+print(schoenfeld)
+plot(schoenfeld)
+@
+
+
 Finally the RMST per arm and distance can be calculated using the calcRmst function:
 <<>>=
 #setting class="FlexTable" will output a FlexTable for importing
@@ -318,31 +326,32 @@ models.withArm <- addModel(models.withArm,
                      c("gengamma", "spline"), 
                      modelOptions=list(spline=list(k=3,scale="odds")))
 
+models.withArm <- addModel(models.withArm, 
+                     "spline", 
+                     modelOptions=list(spline=list(k=2,scale="hazard")))
+
 names(models.withArm@models)
 @
 
 Note it is possible to pass arguments to the model fitting functions using the modelOptions argument (both when adding a model and when initially creating the survival model object). This should be a named list of lists. In the example above the arguments \texttt{k=3} and \texttt{scale="odds"} are to be passed to the spline model fitting function. 
 
-We can also remove models, if for example the fit is poor and we want to exclude the model from any further analyses/output:
+We can also remove models, if for example the fit is poor and we want to exclude the model from any further analyses output (note to remove spline models should include the k and scale arguments as shown below):
 <<>>=
 models.withArm <- removeModel(models.withArm, 
-                              c("gengamma", "spline"))
+                              c("gengamma", "spline_3_odds"))
+models.withArm <- removeModel(models.withArm, 
+                              c("spline_2_hazard"))
 names(models.withArm@models)
 @
 Note, as before, if a subgroup has been used then only the appropriate subset of the data is found inside the SurvivalModel object and subjects who do not have data for the selected endpoint are also removed.
 
-To help decide which spline model to include we can use the \texttt{createSplineAICTable} function to fit multiple spline models simultaneously:
+To help decide which spline model to include we can use the  \texttt{fitSplines} function to fit multiple spline models simultaneously:
 
 <<>>=
-splineAICTable <- createSplineAICTable(models.withArm, 
-                     k=2:4,
-                     scale=c("hazard","odds","normal"),
-                     class="data.frame")
-
-splineAICTable
+splineFits <- fitSplines(models.withArm, k=0:5, scale="hazard")
 @
 
-If \texttt{class} is set to FlexTable then a FlexTable object is output ready for inclusion in a reprteRs Word document.  
+The object created is also a \texttt{SurvivalModel} object and all the functions described below can be applied to this object (note the AIC table and plotting have been slightly adapted for the case when all models are splines).   
 
 \subsection{Properties and parameter estimates}
 Once parametric models have been fitted, we can calculate and display properties such as the estimated value of coefficients:
@@ -391,13 +400,13 @@ icByArm2 <- createIcTable(models.byArm,
 print(icByArm2)
 @
 \subsection{Life tables}
-We can use the models to calculate life tables, i.e. the estimated or predicted proportion of survival at given time points, by providing a user defined vector of times. Life tables are calculated based on a) the non-parametric Kaplan-Meier estimate of the survival curve (no covariates, only intercept), and b) one of the parametric models fitted above:
+We can use the models to calculate life tables, i.e. the estimated or predicted proportion of survival at given time points, by providing a user defined vector of times. Life tables are calculated based on a) the non-parametric Kaplan-Meier estimate of the survival curve (no covariates, only intercept), and b) some of the parametric models fitted above:
 
 <<>>=
 # Calculate life table
 lifeTableWithArm <- createLifeTable(models.withArm,
                                     times = seq(0, 50, 10),
-                                    modelToUse = "llogis", 
+                                    modelToUse = c("llogis", "weibull"), 
                                     class="data.frame")
 # Display life tables
 print(lifeTableWithArm)
@@ -442,7 +451,7 @@ The \textbf{createAvCurvePlotData} function is used to calculate average surviva
 \item models: which models from the SurvivalModel are to be used when
 calculating averaged survival curves - default NULL implies use all
 \item Nsim: the number of simulations to use when creating the average survival curves (only used when covariates are used and curves must be simulated)
-\item seed: Random seed (only used when covariates are used and curves must be simulated)
+\item seed: Random seed (random numbers used when covariates are used and curves must be simulated, always used if confidence intervals are required)
 \item B: (Only used when no covariates included and summary.flexsurvreg is used) Number of simulations from the normal asymptotic distribution of the estimates used to calculate confidence intervals. Decrease for greater speed at the expense of accuracy, or set B=0 to turn off calculation of CIs.
 \end{itemize}
 

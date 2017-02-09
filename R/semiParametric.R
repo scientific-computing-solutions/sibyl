@@ -138,7 +138,9 @@ setMethod("fitSemiParametric", signature(object="SurvivalData"),
                                     censorCol = endPointDef[["censorCol"]])
 
     km <- survfit(formulaToFit,data=survData@subject.data)
-    cox <- coxph(formulaToFit,data=survData@subject.data, ties="breslow")
+    cox <- coxph(formulaToFit,
+                 data=survData@subject.data, 
+                 ties="breslow", model=TRUE)
 
     #fit Cox with strata
     #see note in code of coxphLogRankTest for possible refactoring 
@@ -149,7 +151,9 @@ setMethod("fitSemiParametric", signature(object="SurvivalData"),
                                       strata=strata,
                                       timeCol = endPointDef[["timeCol"]],
                                       censorCol = endPointDef[["censorCol"]])
-      coxWithStrata <- coxph(formulaToFit,data=survData@subject.data, ties="breslow")
+      coxWithStrata <- coxph(formulaToFit,
+                             data=survData@subject.data, 
+                             ties="breslow", model=TRUE)
     }
     
 

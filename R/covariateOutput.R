@@ -24,7 +24,7 @@ covariatesSummary <- function(object, htmlEncoding, meanOrMedian){
 
 
 #Create the covariatesMaturity table
-covariatesMaturitySummary <- function(object){
+covariatesMaturitySummary <- function(object, digits){
   
   #Need to replace <NA> in categorical and logical with a "missing data" level
   #for output in table and converts logical covariates to factors for output
@@ -39,7 +39,7 @@ covariatesMaturitySummary <- function(object){
   retVal <- lapply(names(object@endPoints),function(endPointName){
     createCovariateSummarySubTable(object,
                                    "categorical",
-                                   digits=1, 
+                                   digits=digits, 
                                    htmlEncoding=NULL,
                                    meanOrMedian=NULL,   
                                    endPoint=object@endPoints[[endPointName]]) 
@@ -161,7 +161,7 @@ extractCovariateOutput <- function(object, func, requiredTypes, endPoint){
       }
       
       #for each arm
-      oneArmRes <- vapply(as.character(getArmNames(object)),function(arm){
+      oneArmRes <- vapply(rev(as.character(getArmNames(object))),function(arm){
         covVals <- covVals[theArms==arm]
         cens <- if(!is.null(cens)) cens[theArms==arm] else NULL
         func(covVals, cens)  

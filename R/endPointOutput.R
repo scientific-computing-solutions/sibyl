@@ -106,7 +106,7 @@ extractEndPointOutput <- function(object, func){
       }
       
       #for each arm
-      vapply(as.character(getArmNames(object)),function(arm){
+      vapply(rev(as.character(getArmNames(object))),function(arm){
         time <- time[theArms==arm]
         cens <- cens[theArms==arm]
         func(time, cens)

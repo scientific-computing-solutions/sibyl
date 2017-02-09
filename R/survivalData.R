@@ -49,7 +49,7 @@ setClass("SurvivalData",
 ##' @param timeCol (vector of strings) names of the data columns that specify
 ##'        the times at which subjects reached a particular end point. The N-th
 ##'        element should correspond to the N-th end point.
-##' @param endPointUnit ("days", "months" or "years" - default "months") The unit of time
+##' @param endPointUnit ("days", "weeks", months" or "years" - default "months") The unit of time
 ##' for the endPoint time columns
 ##' @details See Vignette for further details
 ##' @return A \code{SurvivalData} object
@@ -63,7 +63,7 @@ SurvivalData <- function(data,
                          endPointNames,
                          censorCol,
                          timeCol,
-                         endPointUnit=c("days","months","years")[2]){
+                         endPointUnit=c("days","weeks","months","years")[2]){
 
   if (class(data)!="data.frame"){
     stop("'data' must be a data frame")
@@ -80,8 +80,8 @@ SurvivalData <- function(data,
   subgroupDef <- ensureIsList(subgroupDef)
 
   # Validation
-  if(length(endPointUnit)> 1 || !endPointUnit %in% c("days","months","years")){
-    stop("endPointUnit must be one of 'days', 'months' or 'years'")
+  if(length(endPointUnit)> 1 || !endPointUnit %in% c("days","weeks","months","years")){
+    stop("endPointUnit must be one of 'days', 'weeks', 'months' or 'years'")
   }
   
   validateArm(data, armDef)

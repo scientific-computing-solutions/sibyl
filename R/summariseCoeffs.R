@@ -284,6 +284,10 @@ loglogisticSummariser <- function(fittedModel){
 getDistributionDisplayNames <- function(modelNames){
   
   convertFunc <- function(x){
+    if(nchar(x) > 6 && substr(x,1,6)=="spline"){
+      splitString <- strsplit(x,"_")[[1]]
+      return(paste0("Spline\n(", splitString[2], " knots\nscale=", splitString[3],")"))
+    }
     if(x=="lnorm") return("Lognormal")
     if(x=="llogis") return("Loglogistic")
     if(x=="gengamma" || x=="gengamma.orig") return("Generalized Gamma")

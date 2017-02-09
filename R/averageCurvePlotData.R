@@ -35,7 +35,8 @@ setGeneric( "createAvCurvePlotData",
 ##' @param models (character vector) which models from \code{names(object@@models)} are to be used when 
 ##' calculating averaged survival curves - default NULL implies use all
 ##' @param seed (numeric, default NULL) if not NULL then set random seed (although it will only be
-##' used if models include covariates) - only used when models includes covariates 
+##' used if models include covariates) - random numbers are used when models includes covariates 
+##' or when confidence intervals are required  
 ##' @param B (integer) Only used when no covariates in model. See summary.flexsurvreg 
 ##' Number of simulations from the normal asymptotic distribution of the estimates used 
 ##' to calculate confidence intervals. Decrease for greater speed at the expense of accuracy, 
@@ -182,11 +183,25 @@ setMethod("plot", signature(x="AvCurvePlotData", y="missing"),
     upper <- NULL
     lower <- NULL
     
-    #colours for distributions
-    cols <- getDistColours(unique(x@plotdata$model))
-    legendLabel <- getDistributionDisplayNames(unique(x@plotdata$model))
-      
     
+    #setup legend for distributions
+    modelNames <- unique(x@plotdata$model)
+    modelNames <- modelNames[modelNames!="KM"]
+    
+    isModelSplineFit <- isSplineFit(modelNames)
+    if(isModelSplineFit){
+      legendLabel <- extractKnots(modelNames)
+      legendLabel <- c("KM", legendLabel)
+      names(legendLabel) <- c("KM", modelNames)
+      cols <- getSplineDistColours(c("KM",modelNames))
+      legendTitle <- paste0("Spline\n(scale=", extractScale(modelNames[1]), ")\nknots")
+    }
+    else{
+      cols <- getDistColours(unique(x@plotdata$model))
+      legendLabel <- getDistributionDisplayNames(unique(x@plotdata$model))
+      legendTitle <- "Distribution"
+    }  
+   
     # Pull out data for KM curve - this is plotted differently from the others
     kmData <- x@plotdata[x@plotdata$model == "KM", ]
     
@@ -211,7 +226,7 @@ setMethod("plot", signature(x="AvCurvePlotData", y="missing"),
     # Create plot, with KM line shown step-wise and set colours
     #and lgend names correctly
     p <- ggplot(modelData, aes(x = t, y = S, colour = model)) +
-      scale_colour_manual(name="Distribution",values=cols,labels=legendLabel)
+      scale_colour_manual(name=legendTitle, values=cols, labels=legendLabel)
 
     # Add labels
     p <- p + xlab("Time")
@@ -254,13 +269,9 @@ setMethod("plot", signature(x="AvCurvePlotData", y="missing"),
       
     }
     
-    
-    
-    
-
     #if xmax is set then set xlim
     if(!is.null(xMax)){
-      p <- p + coord_cartesian(xlim=c(0, xMax), ylim=c(0,1),expand=FALSE)
+      p <- p + coord_cartesian(xlim=c(0, xMax), ylim=c(0,1.05),expand=FALSE)
     }
     
     # Format background and borders
@@ -274,11 +285,16 @@ setMethod("plot", signature(x="AvCurvePlotData", y="missing"),
   }
 )
 
+
 #modelNames should be a vector of unique model
 #names in the avCurvePlotData object
 getDistColours <- function(modelNames){
   
   retVal <- vapply(modelNames, function(x){
+    if(nchar(x) > 6 && substr(x,1,6)=="spline"){
+      x <- "spline"
+    }
+    
     switch(x,
            KM="black",
            exp="red",
@@ -303,3 +319,27 @@ getDistColours <- function(modelNames){
   retVal
 }
 
+#different colours are used when all models are spline
+#modelNames = c("KM", "0", "3", "4") if splines with 0, 3, 4
+#knots have been fitted
+getSplineDistColours <- function(modelNames){
+  retVal <- vapply(modelNames, function(x){
+    if(nchar(x) > 6 && substr(x,1,6)=="spline"){
+      x <- strsplit(x,"_")[[1]][2]
+    }
+    switch(x,
+         KM="black",
+         "0"="red",
+         "1"="darkblue",
+         "2"="purple",
+         "3"="orange",
+         "4"="cyan",
+         "5"="brown",
+         "6"="blue",
+         "7"="yellow",
+         "8"="pink",
+         "red")
+  },FUN.VALUE = character(1))
+  names(retVal) <- modelNames
+  retVal
+}

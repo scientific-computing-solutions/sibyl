@@ -5,8 +5,8 @@
 \title{Constructor for \code{SurvivalData} object}
 \usage{
 SurvivalData(data, armDef, subjectCol, covDef = NULL, subgroupDef = NULL,
-  endPointNames, censorCol, timeCol, endPointUnit = c("days", "months",
-  "years")[2])
+  endPointNames, censorCol, timeCol, endPointUnit = c("days", "weeks",
+  "months", "years")[2])
 }
 \arguments{
 \item{data}{(data frame) raw data to be formatted into SurvivalData object}
@@ -33,7 +33,7 @@ element should correspond to the N-th end point.}
 the times at which subjects reached a particular end point. The N-th
 element should correspond to the N-th end point.}
 
-\item{endPointUnit}{("days", "months" or "years" - default "months") The unit of time
+\item{endPointUnit}{("days", "weeks", months" or "years" - default "months") The unit of time
 for the endPoint time columns}
 }
 \value{

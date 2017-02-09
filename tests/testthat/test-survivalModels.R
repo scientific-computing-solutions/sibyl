@@ -217,15 +217,15 @@ test_that("adding_a_model_already_included_throws_a_warning",{
 test_that("adding_a_model_already_included_overwrites_old_model",{
   survivalData <- createSurvivalDataObject()
   fit <- fitModels(survivalData,endPoint="relapse",model=c("weibull","spline"),
-                   modelOptions=list(spline=list(k=3)),armAsFactor=FALSE)
+                   modelOptions=list(spline=list(k=3, scale="hazard")),armAsFactor=FALSE)
   
   #check spline has k=3 
-  expect_equal(fit@models$spline$patchOnly$k, 3)
+  expect_equal(fit@models$spline_3_hazard$patchOnly$k, 3)
   
-  expect_warning(fit <- addModel(fit,"spline",list(spline=list(k=4))))
+  expect_warning(fit <- addModel(fit,"spline",list(spline=list(k=3))))
   
   #check spline now has k=4 
-  expect_equal(fit@models$spline$patchOnly$k, 4)
+  expect_equal(fit@models$spline_3_hazard$patchOnly$k, 3)
   
 })
 
