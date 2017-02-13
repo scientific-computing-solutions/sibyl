@@ -290,10 +290,10 @@ calcLifeTableNoCovariates <- function(mod, armName, times, armAsFactor, outputCI
   if(!outputCI) B <- 0
   
   if(armAsFactor){
-    result <- summary.flexsurvreg(mod,t=times, cl=conf.int, newdata=data.frame(arm=armName), ci=outputCI, B=B)
+    result <- summary(mod,t=times, cl=conf.int, newdata=data.frame(arm=armName), ci=outputCI, B=B)
   }
   else{
-    result <- summary.flexsurvreg(mod,t=times, cl=conf.int, ci=outputCI, B=B)
+    result <- summary(mod,t=times, cl=conf.int, ci=outputCI, B=B)
   }
   
   result <- result[[1]]
