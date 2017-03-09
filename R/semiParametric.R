@@ -60,11 +60,17 @@ setGeneric( "fitSemiParametric", function(object,...)
 ##' if not associated with any)
 ##' @param covariates (character vector) names of covariates used when fitting the Cox model if any
 ##' @param strata (character vector) names of covariates to be stratified when fitting the Cox model
+##' @param conf.type ("none", "plain", "log" [default], "log-log") argument passed to survfit
 ##' @export
 setMethod("fitSemiParametric", signature(object="SurvivalData"),
-  function(object, endPoint, subgroup = as.character(NA), covariates=character(0), strata=character(0)){
+  function(object, endPoint, subgroup = as.character(NA), covariates=character(0), strata=character(0),
+           conf.type=c("none", "plain", "log", "log-log")[3]){
 
-
+    if(length(conf.type)!=1 || !conf.type %in% c("none", "plain", "log", "log-log")){
+      stop("Invalid conf.type argument")
+    }
+    
+    
     if (!all(vapply(covariates, is.character, FUN.VALUE = TRUE))){
       stop("covariates must be a vector of character strings")
     }
@@ -137,7 +143,7 @@ setMethod("fitSemiParametric", signature(object="SurvivalData"),
                                     timeCol = endPointDef[["timeCol"]],
                                     censorCol = endPointDef[["censorCol"]])
 
-    km <- survfit(formulaToFit,data=survData@subject.data)
+    km <- survfit(formulaToFit,data=survData@subject.data, conf.type=conf.type)
     cox <- coxph(formulaToFit,
                  data=survData@subject.data, 
                  ties="breslow", model=TRUE)

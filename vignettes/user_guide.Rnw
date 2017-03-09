@@ -157,7 +157,7 @@ Alongside the SurvivalData object, the function requires that we specify the end
 \item strata: a vector of covariates to be used as strata when fitting the Cox model
 \end{itemize}
 
-The KM curve and KM survival estimates are always performed without covariates or strata variables (only intercept), whereas the Cox model is fitted twice, once using the covariates and strata variables if entered as inputs and once unstratified.
+The KM curve and KM survival estimates are always performed without covariates or strata variables (only intercept), whereas the Cox model is fitted twice, once using the covariates and strata variables if entered as inputs and once unstratified. Note the conf.type argument is passed to \texttt{survfit}.
 <<>>=
 sP <- fitSemiParametric(my.data,
                         endPoint="relapse",
@@ -166,7 +166,8 @@ sP <- fitSemiParametric(my.data,
 
 sP2 <- fitSemiParametric(my.data,
                          endPoint="newEndpoint",
-                         subgroup="sub.isMale")
+                         subgroup="sub.isMale",
+                         conf.type="log-log")
 @
 
 The fitSemiParametric function creates a \texttt{SemiParametricModel} object. Note if a subgroup has been used then only the appropriate subset of the data is found inside the SemiParametricModel object (and if subject does not have data for the chosen endpoint it is also removed):
@@ -386,7 +387,7 @@ Models can be compared using Akaike and Bayes information criteria (AIC and BIC)
 \begin{equation}
   \mathrm{BIC} = {-2 \cdot \ln{\hat L} + k \cdot \ln(n)}. \ 
 \end{equation}
-where $L$ is the likelihood, $n$ number of observations and $k$ the number of free model parameters. Again setting the class argument to FlexTable (default) will output a sorted, formatted table to be included in a word document, alternatively a data frame can be output. 
+where $L$ is the likelihood, $n$ number of observations and $k$ the number of free model parameters. Again setting the class argument to FlexTable (default) will output a sorted, formatted table to be included in a word document, alternatively a data frame can be output. Note the conf.type argument can be used and is passed to \texttt{survfit}.
 <<>>=
 icByArm <- createIcTable(models.byArm, 
                          class="data.frame")
@@ -453,6 +454,7 @@ calculating averaged survival curves - default NULL implies use all
 \item Nsim: the number of simulations to use when creating the average survival curves (only used when covariates are used and curves must be simulated)
 \item seed: Random seed (random numbers used when covariates are used and curves must be simulated, always used if confidence intervals are required)
 \item B: (Only used when no covariates included and summary.flexsurvreg is used) Number of simulations from the normal asymptotic distribution of the estimates used to calculate confidence intervals. Decrease for greater speed at the expense of accuracy, or set B=0 to turn off calculation of CIs.
+\item conf.type: This is passed to survfit to choose how to calculate the KM curve's confidence intervals. 
 \end{itemize}
 
 The simulation step (for the model with covariates) takes a bit of time, so please be patient.

@@ -41,12 +41,18 @@ setGeneric( "createAvCurvePlotData",
 ##' Number of simulations from the normal asymptotic distribution of the estimates used 
 ##' to calculate confidence intervals. Decrease for greater speed at the expense of accuracy, 
 ##' or set B=0 to turn off calculation of CIs.
+##' @param conf.type ("none", "plain", "log" [default], "log-log") argument passed to survfit
 ##' @details If the models include covariates a simulation procedure is required to generate averaged survival
 ##' curves. If the models do not include covariates then \code{summary.flexsurvreg} is used
 ##' @export
 setMethod("createAvCurvePlotData", signature(object="SurvivalModel"),
-  function(object, maxTime=NULL, Npoints=201, Nsim=500, models=NULL, seed=NULL, B=1000){
+  function(object, maxTime=NULL, Npoints=201, Nsim=500, models=NULL, seed=NULL, B=1000,
+           conf.type=c("none", "plain", "log", "log-log")[3]){
 
+    if(length(conf.type)!=1 || !conf.type %in% c("none", "plain", "log", "log-log")){
+      stop("Invalid conf.type argument")
+    }
+    
     validateCreateAvCurvePLotDataArgs(maxTime, Npoints, Nsim, seed)
 
     if(!is.null(seed)){
@@ -70,7 +76,7 @@ setMethod("createAvCurvePlotData", signature(object="SurvivalModel"),
     subjectData <- object@survData@subject.data
 
     # Calculate KM-lifetable with times given by survfit
-    KMLifeTables <- calcKMLifeTable(subjectData,endPointDef,outputCI=TRUE)
+    KMLifeTables <- calcKMLifeTable(subjectData,endPointDef,outputCI=TRUE, conf.type)
 
     KMLifeTables <- do.call("rbind",KMLifeTables)
     KMLifeTables$model <- "KM"

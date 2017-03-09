@@ -79,7 +79,7 @@ test_that("nocovariate_and_armAsFactor_match_summary.flexsurvreg",{
   lifeTablesByArm <- split(lT,lT$Arm)
   expect_equal(lifeTablesByArm$patchOnly$t, seq(0,20,4))
   
-  summ <- summary.flexsurvreg(fit@models$gompertz[[1]],t=seq(0,20,4),newdata=data.frame(arm="patchOnly"))
+  summ <- summary(fit@models$gompertz[[1]],t=seq(0,20,4),newdata=data.frame(arm="patchOnly"))
   expect_equal(lifeTablesByArm$patchOnly$gompertz,summ[[1]]$est)
 
 })
@@ -91,6 +91,6 @@ test_that("nocovariate_and_no_armAsFactor_match_summary.flexsurvreg",{
   lifeTablesByArm <- split(lT,lT$Arm)
   expect_equal(lifeTablesByArm$patchOnly$t, seq(0,20,4))
   
-  summ <- summary.flexsurvreg(fit@models$gompertz[[1]],t=seq(0,20,4))
+  summ <- summary(fit@models$gompertz[[1]],t=seq(0,20,4))
   expect_equal(lifeTablesByArm$patchOnly$gompertz,summ[[1]]$est)
 })
