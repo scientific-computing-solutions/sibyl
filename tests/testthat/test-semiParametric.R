@@ -70,6 +70,13 @@ test_that("using_covariate_or_strata_not_in_SurvivalData_gives_error",{
   expect_error(fitSemiParametric(survivalData,endPoint="relapse",strata="otherCovar"))
 })
 
+test_that("invalid_conf.type_throws_error",{
+  survivalData <- createSurvivalDataObject()
+  
+  expect_error(fitSemiParametric(survivalData,endPoint="relapse", conf.type="invalid"))
+  
+})
+
 test_that("SemiParametricModelObjects_can_be_created_with_KM_and_Cox_fitted_approrpriately",{
   survivalData <- createSurvivalDataObject()
   
@@ -87,6 +94,19 @@ test_that("SemiParametricModelObjects_can_be_created_with_KM_and_Cox_fitted_appr
   cox <- coxph(Surv(ttr,!ttr.cens) ~ arm, data=survivalData@subject.data, ties="breslow", model=TRUE)
   cox$call <- sP@cox$call
   expect_equal(sP@cox, cox)
+  
+})
+
+test_that("conf.type_argument_is_passed_to_survfit",{
+  
+  survivalData <- createSurvivalDataObject()
+  
+  sP <- fitSemiParametric(survivalData,endPoint="relapse", conf.type="log-log")
+  #km:
+  km <- survfit(Surv(ttr,!ttr.cens) ~ arm, data=survivalData@subject.data, conf.type="log-log")
+  
+  expect_equal(quantile(sP@km, prob=0.5, conf.int=TRUE), quantile(km, prob=0.5, conf.int=TRUE) )
+  
   
 })
 

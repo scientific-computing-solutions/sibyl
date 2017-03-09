@@ -25,13 +25,18 @@ setGeneric("createLifeTable", function(object,  ...) standardGeneric("createLife
 ##' Number of simulations from the normal asymptotic distribution of the estimates used 
 ##' to calculate confidence intervals. Decrease for greater speed at the expense of accuracy, 
 ##' or set B=0 to turn off calculation of CIs.
+##' @param conf.type ("none", "plain", "log" [default], "log-log") argument passed to survfit
 ##' @details If the models include covariates a simulation procedure is required to generate averaged survival
 ##' curves. If the models do not include covariates then \code{summary.flexsurvreg} is used 
 ##' @export
 setMethod("createLifeTable", signature(object="SurvivalModel"),
   function(object, times, modelToUse = NULL, Nsim=500, class=c("data.frame","FlexTable")[2], digits=3,
-           seed=NULL, B=1000){
+           seed=NULL, B=1000, conf.type=c("none", "plain", "log", "log-log")[3]){
 
+    if(length(conf.type)!=1 || !conf.type %in% c("none", "plain", "log", "log-log")){
+      stop("Invalid conf.type argument")
+    }
+    
     if(!is.null(seed)){
       set.seed(seed)
     }
@@ -60,7 +65,8 @@ setMethod("createLifeTable", signature(object="SurvivalModel"),
 
     # Construct life table for this model
     lifeTable <- calcLifeTable(object@models, object@survData@subject.data, object@endPointDef, times, modelToUse, Nsim,
-                               object@armAsFactor, length(object@covariates)!=0, getArmNames(object@survData), B)
+                               object@armAsFactor, length(object@covariates)!=0, getArmNames(object@survData), B,
+                               conf.type)
 
     if(class=="data.frame"){
       return(lifeTable)
@@ -140,13 +146,13 @@ getBestModel <- function(object){
 #B: see summary.flexsurvreg 
 calcLifeTable <- function(allModelFits, subjectData, endPointDef, times,
                           modelToUse, Nsim, armAsFactor, useCovariates, armNames,
-                          B){
+                          B, conf.type){
   
   # Ensure times in ascending order
   times <- sort(times)
 
   # Calculate KM-lifetable with times given by survfit
-  kmValuesByArm <- calcKMLifeTable(subjectData,endPointDef)
+  kmValuesByArm <- calcKMLifeTable(subjectData,endPointDef, conf.type=conf.type)
 
   #Next convert the standard KM table to one
   #whose time points match the times input by the user
@@ -202,7 +208,7 @@ calcLifeTable <- function(allModelFits, subjectData, endPointDef, times,
 
 
 # Calculate KM-lifetables with times given by survfit
-calcKMLifeTable <- function(subjectData,endPointDef, outputCI=FALSE){
+calcKMLifeTable <- function(subjectData,endPointDef, outputCI=FALSE, conf.type){
   # Create formula for fitting KM curv. Note:
   #   - This is *not* the formula used to originally fit the model, because
   #     that (may) depend on covariates, whereas for the KM curve we don't
@@ -215,7 +221,7 @@ calcKMLifeTable <- function(subjectData,endPointDef, outputCI=FALSE){
                                   censorCol = endPointDef[["censorCol"]])
 
   # Estimate KM curve (for all arms at once)
-  kmFit <- survfit(formulaToFit, data = subjectData)
+  kmFit <- survfit(formulaToFit, data = subjectData, conf.type=conf.type)
 
   # Use extractCumHazData to split up data points by arm
   kmValuesByArm <- extractCumHazData(kmFit,levels(subjectData$arm),outputCI)
