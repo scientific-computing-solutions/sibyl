@@ -258,7 +258,7 @@ diagnosticPlot <- function(x, logTime, yval, use.facet, cumHaz=FALSE, armColours
   
   #Add facet
   if(use.facet){
-    p <- p + facet_grid(Arm ~ .)
+    p <- p + facet_grid(. ~ Arm)
   }
   
   if(cumHaz){

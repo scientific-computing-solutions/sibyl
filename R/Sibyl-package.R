@@ -38,3 +38,16 @@ NULL
 #' } 
 "sibylData"
 
+
+##' Method to extract the endpoint units for a given object
+##' @rdname getEndpointUnits-methods
+##' @name getEndpointUnits
+##' @param object The object whose endpoint units is required
+##' @return The units of the endpoints for the given object
+##' @export
+setGeneric( "getEndpointUnits", function(object)
+  standardGeneric("getEndpointUnits"))
+
+
+
+

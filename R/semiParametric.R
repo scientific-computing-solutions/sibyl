@@ -177,6 +177,16 @@ setMethod("fitSemiParametric", signature(object="SurvivalData"),
 )
 
 
+##' @rdname getEndpointUnits-methods
+##' @aliases getEndpointUnits,SemiParametricModel-methods
+##' @export
+setMethod("getEndpointUnits", signature(object="SemiParametricModel"),
+  function(object){
+    getEndpointUnits(object@survData)  
+  }
+)
+
+
 ##' Method to extract the logrank test from the Cox model
 ##' fit for the SemiParametricModel - this uses the strata and
 ##' covariates parameters used when creating the SemiParametricModel object

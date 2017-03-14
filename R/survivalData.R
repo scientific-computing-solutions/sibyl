@@ -15,7 +15,7 @@ NULL
 ##' (the control group should be first) in the subject.data data frame
 ##' @slot endPoints (list of lists) each endpoint is the name of a two element list, "timeCol" - the time
 ##' to event for the given endpoint and "censorCol" whether the subject was censored (\code{TRUE}) or not (\code{FALSE}).
-##' @slot endPointUnit (days, months, years) The units for the endpoints
+##' @slot endPointUnit (days, weeks, months, years) The units for the endpoints
 ##' @slot subgroupDef (list of \code{ColumnDef}) definitions of the columns in the subject.data data frame
 ##' describing subgroups
 ##' @slot covDef (list of \code{ColumnDef}) definitions of columns in the
@@ -301,3 +301,13 @@ getZeroTimes <- function(object){
   if(all(retVal=="")) return(NULL)
   paste(retVal[retVal!=""],collapse="\n")
 }
+
+
+##' @rdname getEndpointUnits-methods
+##' @aliases getEndpointUnits,SurvivalData-methods
+##' @export
+setMethod("getEndpointUnits", signature(object="SurvivalData"),
+  function(object){
+    object@endPointUnit  
+  }
+)

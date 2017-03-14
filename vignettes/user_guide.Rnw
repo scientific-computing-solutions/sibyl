@@ -354,6 +354,8 @@ splineFits <- fitSplines(models.withArm, k=0:5, scale="hazard")
 
 The object created is also a \texttt{SurvivalModel} object and all the functions described below can be applied to this object (note the AIC table and plotting have been slightly adapted for the case when all models are splines).   
 
+The \texttt{getSplineKnotLocations} function can extract the spline knot locations for a given spline model, see the function help page for further details.
+
 \subsection{Properties and parameter estimates}
 Once parametric models have been fitted, we can calculate and display properties such as the estimated value of coefficients:
 <<>>=

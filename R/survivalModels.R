@@ -142,6 +142,15 @@ function(object,
 })
 
 
+##' @rdname getEndpointUnits-methods
+##' @aliases getEndpointUnits,SurvivalModel-methods
+##' @export
+setMethod("getEndpointUnits", signature(object="SurvivalModel"),
+  function(object){
+    getEndpointUnits(object@survData)  
+  }
+)
+
 # Helper function to do model fitting: see fitModels and addModel for examples of use
 internalFitModels <- function(model, modelOptions, preferredPackage, formulaToFit, survData, armAsFactor, covariates, endPointDef){
 

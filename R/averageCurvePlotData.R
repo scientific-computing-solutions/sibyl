@@ -13,9 +13,18 @@ NULL
 ##'   \item{upper} upper (95%) confidence interval for S
 ##'   \item{model} which model was used to generate the data (or "KM" for the Kaplan-Meier estimator)
 ##' } 
+##' @slot Nsim (numeric) The number of simulations used to generate the survival curves
+##' This is either Nsim or B from the \code{createAvCurvePlotData} function
+##' @slot hasCovariates (logical) TRUE if model used to generate the object contained
+##' covariates and therefore simulation was required. FALSE if no covariates so 
+##' summary of the model is used
+##' @slot endPointUnit (days, weeks, months, years) The units for the endpoints 
 ##' @export
 setClass("AvCurvePlotData",
-         slots = list(plotdata="data.frame"))
+         slots = list(plotdata="data.frame",
+                      Nsim="numeric",
+                      hasCovariates="logical",
+                      endPointUnit="character"))
 
 
 ##' Method to create the \code{AvCurvePlotData} object
@@ -53,7 +62,7 @@ setMethod("createAvCurvePlotData", signature(object="SurvivalModel"),
       stop("Invalid conf.type argument")
     }
     
-    validateCreateAvCurvePLotDataArgs(maxTime, Npoints, Nsim, seed)
+    validateCreateAvCurvePlotDataArgs(maxTime, Npoints, Nsim, seed)
 
     if(!is.null(seed)){
       set.seed(seed)
@@ -104,14 +113,14 @@ setMethod("createAvCurvePlotData", signature(object="SurvivalModel"),
     parametricLifeTables <- lapply(models, function(modelName){
 
       if(length(object@covariates)!=0){
-      
-      #calculate the lifetable for a single model, for each arm
-      lifeTableOneModel <-
-        mapply(calcParametricLifeTable, mod=object@models[[modelName]],
-               oneArmData=dataByArm,
-               MoreArgs=list(times=times,Nsim=Nsim, outputCI=TRUE), SIMPLIFY = FALSE)
-      }
+        #calculate the lifetable for a single model, for each arm
+        lifeTableOneModel <-
+          mapply(calcParametricLifeTable, mod=object@models[[modelName]],
+                 oneArmData=dataByArm,
+                 MoreArgs=list(times=times,Nsim=Nsim, outputCI=TRUE), SIMPLIFY = FALSE)
+        }
       else{
+        
         lifeTableOneModel <- mapply(calcLifeTableNoCovariates, mod=object@models[[modelName]], 
                                     armName=getArmNames(object@survData),
                                     MoreArgs=list(times=times,outputCI=TRUE,B=B,
@@ -131,12 +140,17 @@ setMethod("createAvCurvePlotData", signature(object="SurvivalModel"),
     result <- rbind(KMLifeTables, parametricLifeTables)
     rownames(result) <- NULL
 
+    hasCovariates <- length(object@covariates)!=0
+    
     new("AvCurvePlotData",
-        plotdata=result)
+        plotdata=result,
+        Nsim=if(hasCovariates) Nsim else B,
+        hasCovariates=hasCovariates,
+        endPointUnit=getEndpointUnits(object))
 })
 
 
-validateCreateAvCurvePLotDataArgs <- function(maxTime, Npoints, Nsim, seed){
+validateCreateAvCurvePlotDataArgs <- function(maxTime, Npoints, Nsim, seed){
   
   if(!is.null(seed)){
     if(length(seed)>1 || !is.numeric(seed)){
@@ -163,6 +177,15 @@ validateCreateAvCurvePLotDataArgs <- function(maxTime, Npoints, Nsim, seed){
   } 
 
 }  
+
+##' @rdname getEndpointUnits-methods
+##' @aliases getEndpointUnits,AvCurvePlotData-methods
+##' @export
+setMethod("getEndpointUnits", signature(object="AvCurvePlotData"),
+  function(object){
+    object@endPointUnit
+  }
+)
 
 
 ##' @rdname plot-methods
@@ -235,14 +258,14 @@ setMethod("plot", signature(x="AvCurvePlotData", y="missing"),
       scale_colour_manual(name=legendTitle, values=cols, labels=legendLabel)
 
     # Add labels
-    p <- p + xlab("Time")
+    p <- p + xlab(paste0("Time [", getEndpointUnits(x),"]"))
     p <- p + ylab("P(survival)")
 
     # Show arms on separate plots
     if (use.facet){
 
       # Separate plots for each arm
-      p <- p + facet_grid(Arm ~ .)
+      p <- p + facet_grid(. ~ Arm)
 
       # Use the same line type on each plot
       p <- p +

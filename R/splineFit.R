@@ -82,3 +82,89 @@ extractForSpline <- function(modelNames, index){
     strsplit(name, "_")[[1]][index]
   }, FUN.VALUE=character(1))  
 }
+
+
+
+
+##' Given a SurvivalModel object, output a data frame
+##' containing the knot locations (NOT on log-scale) of the given model name 
+##' @param object (SurvivalModel) Survival model containing the
+##' models fit
+##' @param k (numeric) The number of knots of the spline model
+##' whose knot locations are required
+##' @param scale ("hazard", "odds", or "normal") The scale argument
+##' of the spline model whose knots are required 
+##' @param class ("data.frame" or "FlexTable") whether to output the table
+##' as a data.frame or FlexTable
+##' @param digits (numeric) The number of digits to round the locations
+##' when class="FlexTable"  
+##' @export
+getSplineKnotLocations <- function(object, k, scale, class=c("data.frame", "FlexTable")[2],
+                                   digits=5){
+  
+  if(class(object)!="SurvivalModel"){
+    stop("Object must be of type SurvivalModel")
+  }
+  
+  if(length(k)!=1 || length(scale) != 1){
+    stop("k and scale must be arguments of length 1")
+  }
+  
+  if(length(class)!=1 || !class %in% c("data.frame","FlexTable")){
+    stop("class argument must be data.frame or FlexTable")
+  }
+  
+  if(length(digits)!=1 || !is.numeric(digits) || !digits > 0 || is.infinite(digits) ||
+     is.na(digits)){
+    stop("Invalid digits argument")
+  } 
+  
+  splineModelName <- paste("spline", k, scale, sep="_")
+  if(!splineModelName %in% names(object@models)){
+    stop("Spline model with k ", k, "and scale ", scale, " has not been fitted")
+  }
+  
+  #list of the given spline model, one per arm
+  splineModel <- object@models[[splineModelName]]
+  
+  #no knot locations
+  if(k==0){
+    stop("No knot locations as there are no knots!")
+  }
+  
+  #for each model (one per arm) extract the knot locations
+  knotLocations <- lapply(splineModel, function(oneArmModel){
+    
+    knots <- oneArmModel$knots
+    #safe as knots includes boundary positions so is always a vector of length >2
+    knots <- knots[2:(length(knots)-1)]
+    
+    data.frame(knots=exp(knots))
+    
+  })
+  
+  retVal <- do.call(cbind, knotLocations)
+  rownames(retVal) <- NULL
+  colnames(retVal) <- if(is.na(names(knotLocations)[1])) "Spline knot locations" else names(knotLocations)
+  
+  if(class=="data.frame"){
+    return(retVal)
+  }
+  
+  MyFTable <- FlexTable(round(retVal,digits=digits),
+            body.par.props=parProperties(text.align="right"),
+            header.text.props = textProperties(font.weight = "bold"),
+            body.cell.props = cellProperties(padding.right=2))
+  
+  if(ncol(retVal) > 1){
+    hR <- FlexRow("Spline knot locations",colspan = ncol(retVal),
+                  par.properties=parProperties(text.align="center",padding=1),
+                  text.properties = textProperties(font.weight = "bold"),
+                  cell.properties = cellProperties(border.top.width=1, border.bottom.width=0,
+                                                   border.left.width=1, border.right.width=1))
+    
+    MyFTable <- addHeaderRow(first=TRUE, MyFTable, hR)
+  }
+  
+  MyFTable
+}
