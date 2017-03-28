@@ -367,7 +367,8 @@ calcParametricLifeTable <- function(mod, oneArmData, times, Nsim, outputCI=FALSE
   ##create our cdf function - splines need knots argument
   cdf <- function(params){do.call(tmp.f, c(list(times), params))}
   if(!is.null(mod$knots)){
-    cdf <- function(params){do.call(tmp.f, c(list(times, knots=mod$knots), params))} 
+    cdf <- function(params){do.call(tmp.f, c(list(times, knots=mod$knots, scale=mod$scale,
+                                                  timescale=mod$aux$timescale), params))} 
   }
   
   
