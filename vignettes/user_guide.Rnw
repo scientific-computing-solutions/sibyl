@@ -384,8 +384,8 @@ Setting the argument `class' to be `FlexTable' will generate formatted tables wh
 
 Models can be compared using Akaike and Bayes information criteria (AIC and BIC) values. 
 \begin{equation}
-  {\mathrm  {AIC}}=2k-2\ln(L)
-\end{equation},
+  {\mathrm  {AIC}}=2k-2\ln(L),
+\end{equation}
 \begin{equation}
   \mathrm{BIC} = {-2 \cdot \ln{\hat L} + k \cdot \ln(n)}. \ 
 \end{equation}
@@ -474,6 +474,43 @@ Finally these can be plotted:
 plot(paramSurvCurveByArm, use.facet=FALSE)
 plot(paramSurvCurveWithArm, useCI=TRUE)
 @
+
+\section{Single arm trials}
+
+The package can also be used for single arm trials. Make sure that the data set contains subjects from only a single arm and define the appropriate \texttt{ColumnDef} object to describe the arm:
+
+<<>>=
+#create single arm data set
+sibylDataOneArm <- sibylData[sibylData$grp=="patchOnly",]
+
+#describe the treatment column
+armDef <- ColumnDef(columnName = "grp",
+                    type = "categorical",
+                    categories = factor(c("patchOnly"),
+                                        levels=c("patchOnly")))
+
+#create the SurvivalData object
+oneArmData <- SurvivalData(data = sibylDataOneArm,
+                        armDef = armDef,
+                        covDef = covariateDef,
+                        subgroupDef = subgroupDef,
+                        subjectCol = "ID",
+                        endPointNames = c("relapse", "newEndpoint"),
+                        censorCol = c("ttr.cens", "cens.2"),
+                        timeCol = c("ttr", "end.2"))
+
+#check that Sibyl thinks the object describes a single arm trial
+isSingleArm(oneArmData)
+@
+
+All the functionality of Sibyl is available for the one arm case with the following caveats:
+\begin{itemize}
+\item Cox models are not stored in the SemiParametricModel object
+\item \texttt{use.facet} must be \texttt{FALSE} when plotting the diagnostic plots
+\item Cannot calculate logrank test, Cox-snell residuals, Schoenfeld residuals or (non-parametric) restricted mean
+\item When fitting parametric models \texttt{armAsFactor} should be set to FALSE and a single model is fitted to the data for each distribution
+\item \texttt{use.facet} argument has no effect when plotting the averaged survival curves
+\end{itemize}
 
 
 \section*{Appendix}

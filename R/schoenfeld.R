@@ -22,6 +22,9 @@ setGeneric("schoenfeldResiduals", function(object, ...)
 ##' @rdname schoenfeldResiduals-methods
 setMethod("schoenfeldResiduals", "SemiParametricModel", 
   function(object, ...){
+    if(isSingleArm(object)){
+      stop("Cannot compute Schoenfeld residuals for a one arm trial!")
+    }
     cox.zph(object@cox, ...)  
   }
 )

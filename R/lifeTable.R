@@ -66,7 +66,7 @@ setMethod("createLifeTable", signature(object="SurvivalModel"),
     # Construct life table for this model
     lifeTable <- calcLifeTable(object@models, object@survData@subject.data, object@endPointDef, times, modelToUse, Nsim,
                                object@armAsFactor, length(object@covariates)!=0, getArmNames(object@survData), B,
-                               conf.type)
+                               isSingleArm(object), conf.type)
 
     if(class=="data.frame"){
       return(lifeTable)
@@ -101,13 +101,15 @@ setMethod("createLifeTable", signature(object="SurvivalModel"),
                   par.properties=parProperties(text.align="center",padding=1),
                   text.properties = textProperties(font.weight = "bold"))
     
-    hR2 <- FlexRow(c("", "Kaplan Meier",getDistributionDisplayNames(tableHeading)),
+    firstColText <- if(isSingleArm(object)) "time" else ""
+    
+    hR2 <- FlexRow(c(firstColText, "Kaplan Meier",getDistributionDisplayNames(tableHeading)),
                    colspan = c(1,rep(length(arms),length(tableHeading)+1)),
                    par.properties=parProperties(text.align="center",padding=1),
                    text.properties = textProperties(font.weight = "bold"))
     
     MyFTable <- addHeaderRow(MyFTable,hR2)
-    MyFTable <- addHeaderRow(MyFTable,hR)
+    if(!isSingleArm(object))  MyFTable <- addHeaderRow(MyFTable,hR)
     
     MyFTable
 })
@@ -146,13 +148,14 @@ getBestModel <- function(object){
 #B: see summary.flexsurvreg 
 calcLifeTable <- function(allModelFits, subjectData, endPointDef, times,
                           modelToUse, Nsim, armAsFactor, useCovariates, armNames,
-                          B, conf.type){
+                          B, isSingleArm, conf.type){
+
   
   # Ensure times in ascending order
   times <- sort(times)
 
   # Calculate KM-lifetable with times given by survfit
-  kmValuesByArm <- calcKMLifeTable(subjectData,endPointDef, conf.type=conf.type)
+  kmValuesByArm <- calcKMLifeTable(subjectData,endPointDef, isSingleArm=isSingleArm, conf.type=conf.type)
 
   #Next convert the standard KM table to one
   #whose time points match the times input by the user
@@ -208,7 +211,7 @@ calcLifeTable <- function(allModelFits, subjectData, endPointDef, times,
 
 
 # Calculate KM-lifetables with times given by survfit
-calcKMLifeTable <- function(subjectData,endPointDef, outputCI=FALSE, conf.type){
+calcKMLifeTable <- function(subjectData, endPointDef, outputCI=FALSE, isSingleArm, conf.type){
   # Create formula for fitting KM curv. Note:
   #   - This is *not* the formula used to originally fit the model, because
   #     that (may) depend on covariates, whereas for the KM curve we don't
@@ -216,7 +219,7 @@ calcKMLifeTable <- function(subjectData,endPointDef, outputCI=FALSE, conf.type){
   #   - Arm is always factor because then survfit will fit each arm
   #     separately, without having to explicitly loop over arms. We can then
   #     separate out results for different arms.
-  formulaToFit <- survivalFormula(armAsFactor = TRUE,
+  formulaToFit <- survivalFormula(armAsFactor = !isSingleArm,
                                   timeCol = endPointDef[["timeCol"]],
                                   censorCol = endPointDef[["censorCol"]])
 
@@ -224,7 +227,7 @@ calcKMLifeTable <- function(subjectData,endPointDef, outputCI=FALSE, conf.type){
   kmFit <- survfit(formulaToFit, data = subjectData, conf.type=conf.type)
 
   # Use extractCumHazData to split up data points by arm
-  kmValuesByArm <- extractCumHazData(kmFit,levels(subjectData$arm),outputCI)
+  kmValuesByArm <- extractCumHazData(kmFit, levels(subjectData$arm), outputCI, isSingleArm=isSingleArm)
 
   # Name values according to arm
   names(kmValuesByArm) <- levels(subjectData$arm)
@@ -367,7 +370,7 @@ calcParametricLifeTable <- function(mod, oneArmData, times, Nsim, outputCI=FALSE
   ##create our cdf function - splines need knots argument
   cdf <- function(params){do.call(tmp.f, c(list(times), params))}
   if(!is.null(mod$knots)){
-    cdf <- function(params){do.call(tmp.f, c(list(times, knots=mod$knots, scale=mod$scale,
+    cdf <- function(params){do.call(tmp.f, c(list(times, knots=mod$knots, scale=mod$scale, 
                                                   timescale=mod$aux$timescale), params))} 
   }
   

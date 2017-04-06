@@ -85,7 +85,7 @@ setMethod("createAvCurvePlotData", signature(object="SurvivalModel"),
     subjectData <- object@survData@subject.data
 
     # Calculate KM-lifetable with times given by survfit
-    KMLifeTables <- calcKMLifeTable(subjectData,endPointDef,outputCI=TRUE, conf.type)
+    KMLifeTables <- calcKMLifeTable(subjectData,endPointDef,outputCI=TRUE, isSingleArm(object),  conf.type)
 
     KMLifeTables <- do.call("rbind",KMLifeTables)
     KMLifeTables$model <- "KM"
@@ -188,10 +188,21 @@ setMethod("getEndpointUnits", signature(object="AvCurvePlotData"),
 )
 
 
+##' @name isSingleArm
+##' @aliases isSingleArm,AvCurvePlotData-method
+##' @rdname isSingleArm-methods
+##' @export
+setMethod("isSingleArm", signature(object="AvCurvePlotData"),
+  function(object){
+    length(levels(object@plotdata$Arm))==1
+  }
+)
+
 ##' @rdname plot-methods
 ##' @name plot
 ##' @aliases plot,AvCurvePlotData,missing-method
-##' @param use.facet (logical) should the treatment arms be split into different facets
+##' @param use.facet (logical) should the treatment arms be split into different facets - 
+##' unused for a single arm trial
 ##' @param outputModel (character) which model's survival curves should be plotted (default NULL
 ##' implies use all) if =character(0) then output only the KM curve
 ##' @param xMax (numeric or default NULL) the x-axis limit for the graph. If not included then
@@ -253,7 +264,7 @@ setMethod("plot", signature(x="AvCurvePlotData", y="missing"),
     
 
     # Create plot, with KM line shown step-wise and set colours
-    #and lgend names correctly
+    #and legend names correctly
     p <- ggplot(modelData, aes(x = t, y = S, colour = model)) +
       scale_colour_manual(name=legendTitle, values=cols, labels=legendLabel)
 
@@ -262,10 +273,10 @@ setMethod("plot", signature(x="AvCurvePlotData", y="missing"),
     p <- p + ylab("P(survival)")
 
     # Show arms on separate plots
-    if (use.facet){
+    if (use.facet || isSingleArm(x)){
 
       # Separate plots for each arm
-      p <- p + facet_grid(. ~ Arm)
+      if(!isSingleArm(x)) p <- p + facet_grid(. ~ Arm)
 
       # Use the same line type on each plot
       p <- p +

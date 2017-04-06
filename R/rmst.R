@@ -162,8 +162,12 @@ setMethod("calcRmst", "SemiParametricModel", function(object,class=c("rmst","Fle
     stop("Invalid class argument, should be 'rmst' or 'FlexTable")
   }
   
+  if(isSingleArm(object)){
+    stop("Cannot calculate rmst for a single arm trial")
+  }
+  
   # Create formula for Kaplan-Meier estimator
-  formulaToFit <- survivalFormula(armAsFactor=TRUE,
+  formulaToFit <- survivalFormula(armAsFactor=!isSingleArm(object),
                                   covariates=character(0),
                                   timeCol = object@endPointDef[["timeCol"]],
                                   censorCol = object@endPointDef[["censorCol"]])

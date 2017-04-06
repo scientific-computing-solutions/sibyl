@@ -187,12 +187,10 @@ internalGetICTable <- function(object){
   # Convert list of lists to data frame
   icValues <- data.frame(do.call("rbind", icValues))
   
-  # Have to re-create data frame like this so tabular
-  # command works
-  icValues <- data.frame(Model=unlist(icValues[,1]),
-                         Arm=unlist(icValues[,2]),
-                         AIC=unlist(icValues[,3]),
-                         BIC=unlist(icValues[,4]))  
+  data.frame(Model=unlist(icValues[,1]),
+             Arm=unlist(icValues[,2]),
+             AIC=unlist(icValues[,3]),
+             BIC=unlist(icValues[,4]))  
 }
 
 # Support function in case AIC unavailable 

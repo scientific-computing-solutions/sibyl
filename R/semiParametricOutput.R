@@ -32,17 +32,19 @@ setMethod("summary", signature(object="SemiParametricModel"),
             
     #bind on the number of events
     summaryKM <- summary(object@km)
-    results <- cbind(summaryKM$table[,"events"],results)
+    #notice the comma in the line below to handle different cases
+    eventDetails <- if(isSingleArm(object)) summaryKM$table["events"] else summaryKM$table[,"events"] 
+    results <- cbind(eventDetails, results)
             
     #set row/column names
     rownames(results) <- getArmNames(object@survData)
     colnames(results) <- c("Total Events","Median time to event","Lower.CI","Upper.CI")
             
     #calculate ratios
-    if(nrow(results)!=2){
+    if(nrow(results) > 2){
       warning("Not calculating ratios/differences when there is more than one arm")
     }
-    else{
+    else if(nrow(results) == 2){
       ratio <- apply(results,2,function(x){x[2]/x[1]})
       difference <- apply(results, 2, function(x){x[2]-x[1]})
       results <- rbind(results,ratio=ratio)
@@ -131,7 +133,10 @@ kmsummary <- function(object, class, digits){
   #get summary
   s <- summary(object@km, censored=TRUE)
   #coerce to data frame
-  summaryData <- data.frame(arm=s$strata,time=s$time,survival=s$surv,
+  
+  arm <- if(isSingleArm(object)) getArmNames(object@survData) else s$strata
+  
+  summaryData <- data.frame(arm=arm,time=s$time,survival=s$surv,
                             n.risk=s$n.risk,n.event=s$n.event, std.err=s$std.err,
                             x=s$lower, y=s$upper)
   colnames(summaryData)[7:8] <- paste(c("lower","upper"), "95% CI")
@@ -213,6 +218,11 @@ kmPlot <- function(x, ...){
 #cumHaz is true if we are outputting cumulative hazard plot
 diagnosticPlot <- function(x, logTime, yval, use.facet, cumHaz=FALSE, armColours){
   
+  #cannot use facet if this is a single arm trial
+  if(use.facet && isSingleArm(x)){
+    stop("use.facet must be FALSE when trial is a single arm trial")
+  }
+  
   #R-cmd-check thinks t, s, model, ... are global
   #variables inside the ggplot commands so complains about them
   #they are not global variables but for them to pass R-cmd-check we
@@ -227,11 +237,11 @@ diagnosticPlot <- function(x, logTime, yval, use.facet, cumHaz=FALSE, armColours
   
   #extract the cumulative hazard data from the survfit object
   armNames <- getArmNames(x@survData)
-  data <- extractCumHazData(x@km, armNames)
+  data <- extractCumHazData(x@km, armNames, isSingleArm=isSingleArm(x))
   
   # Concatenate list of data frames row-wise into one big data frame
   data <- do.call("rbind", data)
-  
+ 
   #remove the edge cases
   if(logTime){
     data <- data[data$t > 0,]
@@ -278,7 +288,7 @@ diagnosticPlot <- function(x, logTime, yval, use.facet, cumHaz=FALSE, armColours
   # Format background and borders
   p <- p + theme(panel.background = element_blank(),
                  panel.border = element_rect(colour = "black", fill = NA),
-                 panel.grid.major = element_blank(),
+                 panel.grid.major = element_line(colour="grey", linetype="dotted"),
                  panel.grid.minor = element_blank())
   
   p

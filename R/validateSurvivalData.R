@@ -35,12 +35,6 @@ validateArm <- function(data, armDef){
   # Arm column name is valid
   checkColumnNameValid(colnames(data), armDef@columnName)
   
-  # Arm definition has at least two levels (one per arm)
-  if (length(armDef@categories) < 2){
-    stop(paste0("Definition of arm column '", armDef@columnName,
-                "' contains fewer than two levels. There must be one level per treatment group and at least two groups."))
-  }
-  
   # Values in arm column must match defined categories
   categoriesNotFound <- setdiff(armDef@categories, data[, armCol])
   if (length(categoriesNotFound) > 0){

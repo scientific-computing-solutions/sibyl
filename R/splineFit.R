@@ -32,20 +32,22 @@ setMethod("fitSplines", signature(object="SurvivalModel"),
       
       #if no model successfully fit
       suppressWarnings(
-      retVal <- if(is.null(retVal))
-        fitModels(object@survData,
-                  armAsFactor=object@armAsFactor, 
-                  covariates=object@covariates, 
-                  subgroup=object@subgroup, 
-                  endPoint=object@endPoint,
-                  model="spline", modelOptions=modelOptions) 
-                else
-        addModel(retVal, "spline",modelOptions=modelOptions)
+      retVal <- tryCatch({ 
+          if(is.null(retVal))
+            fitModels(object@survData,
+                      armAsFactor=object@armAsFactor, 
+                      covariates=object@covariates, 
+                      subgroup=object@subgroup, 
+                      endPoint=object@endPoint,
+                      model="spline", modelOptions=modelOptions) 
+          else
+            addModel(retVal, "spline",modelOptions=modelOptions)},
+          error=function(cond) retVal)
       )
     }
     
     if(is.null(retVal)){
-      warning("None of the spline models could be fit")  
+      stop("None of the spline models could be fit")  
     }
     
     retVal
@@ -127,36 +129,30 @@ getSplineKnotLocations <- function(object, k, scale, class=c("data.frame", "Flex
   #list of the given spline model, one per arm
   splineModel <- object@models[[splineModelName]]
   
-  #no knot locations
-  if(k==0){
-    stop("No knot locations as there are no knots!")
-  }
-  
   #for each model (one per arm) extract the knot locations
   knotLocations <- lapply(splineModel, function(oneArmModel){
-    
     knots <- oneArmModel$knots
-    #safe as knots includes boundary positions so is always a vector of length >2
-    knots <- knots[2:(length(knots)-1)]
-    
     data.frame(knots=exp(knots))
-    
   })
   
   retVal <- do.call(cbind, knotLocations)
   rownames(retVal) <- NULL
   colnames(retVal) <- if(is.na(names(knotLocations)[1])) "Spline knot locations" else names(knotLocations)
   
+  boundaryDataFrame <- data.frame(knotType=c("boundary knot", rep("", k ), "boundary knot"))
   if(class=="data.frame"){
-    return(retVal)
+    return(cbind(boundaryDataFrame, retVal))
   }
   
-  MyFTable <- FlexTable(round(retVal,digits=digits),
+  retVal <- cbind(boundaryDataFrame,round(retVal,digits=digits))
+  colnames(retVal)[1] <- ""
+  
+  MyFTable <- FlexTable(retVal,
             body.par.props=parProperties(text.align="right"),
             header.text.props = textProperties(font.weight = "bold"),
             body.cell.props = cellProperties(padding.right=2))
   
-  if(ncol(retVal) > 1){
+  if(ncol(retVal) > 2){
     hR <- FlexRow("Spline knot locations",colspan = ncol(retVal),
                   par.properties=parProperties(text.align="center",padding=1),
                   text.properties = textProperties(font.weight = "bold"),

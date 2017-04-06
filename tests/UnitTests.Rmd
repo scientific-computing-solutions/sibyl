@@ -29,5 +29,6 @@ Following the order of creation of objects as shown in the user guide:
 * test-splineAIC.R tests the creation of the Spline AIC table
 * test-rmst.R tests the creation of the parametric restricted mean table
 * test-specificEndpointValidation.R tests the specificEndpointRules and getZeroTimes functions
+* test-oneArm.R tests the package works with single arm trials
 
 Note that the creation of the data frames/matrices used to generate the FlexTable objects have been unit tested but the FlexTable creations themselves have not been tested (FlexTables are rJava objects and not testable)

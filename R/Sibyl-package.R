@@ -38,6 +38,17 @@ NULL
 #' } 
 "sibylData"
 
+##' Method to check whether an object contains data/models for a one arm clinical
+##' trial
+##' @rdname isSingleArm-methods
+##' @name isSingleArm
+##' @param object The object to check whether it contains the details for a
+##' single arm trial
+##' @return logical, whether the object was a single arm trial
+##' @export
+setGeneric( "isSingleArm", function(object)
+  standardGeneric("isSingleArm"))
+
 
 ##' Method to extract the endpoint units for a given object
 ##' @rdname getEndpointUnits-methods
@@ -47,7 +58,4 @@ NULL
 ##' @export
 setGeneric( "getEndpointUnits", function(object)
   standardGeneric("getEndpointUnits"))
-
-
-
 

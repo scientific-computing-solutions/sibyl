@@ -17,7 +17,8 @@
 \arguments{
 \item{x}{(SemiParametricModel object) contains data to be plotted}
 
-\item{use.facet}{(logical) should the treatment arms be split into different facets}
+\item{use.facet}{(logical) should the treatment arms be split into different facets - 
+unused for a single arm trial}
 
 \item{outputModel}{(character) which model's survival curves should be plotted (default NULL
 implies use all) if =character(0) then output only the KM curve}
