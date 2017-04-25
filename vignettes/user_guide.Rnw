@@ -23,7 +23,7 @@ This R-package is design to simplify the statistical analyses needed to perform 
 
 
 \section{Requirements}
-Besides from some external packages (such as ggplot2) the \texttt{Sibyl} package depends on two internal packages \texttt{azGraphics} and \texttt{azRMST}. These need to be installed together with \texttt{Sibyl}. Before starting the examples, we load the package.  
+Besides from some external packages (such as ggplot2) the \texttt{Sibyl} package depends on the package \texttt{azRMST}which needs to be installed together with \texttt{Sibyl}. Before starting the examples, we load the package.  
 <<,message=FALSE, warning=FALSE>>=
 library(Sibyl)
 @
@@ -157,7 +157,7 @@ Alongside the SurvivalData object, the function requires that we specify the end
 \item strata: a vector of covariates to be used as strata when fitting the Cox model
 \end{itemize}
 
-The KM curve and KM survival estimates are always performed without covariates or strata variables (only intercept), whereas the Cox model is fitted twice, once using the covariates and strata variables if entered as inputs and once unstratified. Note the conf.type argument is passed to \texttt{survfit}.
+The KM curve and KM survival estimates are always performed without covariates or strata variables (only intercept), whereas the Cox model is fitted twice, once using the covariates and strata variables if entered as inputs and once unstratified. Note the conf.type argument is passed to \texttt{survfit} and the ties argument passed to \texttt{coxph} (default is ``breslow'').
 <<>>=
 sP <- fitSemiParametric(my.data,
                         endPoint="relapse",
@@ -167,7 +167,8 @@ sP <- fitSemiParametric(my.data,
 sP2 <- fitSemiParametric(my.data,
                          endPoint="newEndpoint",
                          subgroup="sub.isMale",
-                         conf.type="log-log")
+                         conf.type="log-log",
+                         ties="efron")
 @
 
 The fitSemiParametric function creates a \texttt{SemiParametricModel} object. Note if a subgroup has been used then only the appropriate subset of the data is found inside the SemiParametricModel object (and if subject does not have data for the chosen endpoint it is also removed):
@@ -232,7 +233,7 @@ plot(sP, type="CumHaz", use.facet=FALSE,
 
 plot(sP, type="loglogs", use.facet=TRUE, armColours=c("blue","green"))
 @
-The KM option displays slightly differently from the other options because it uses the \texttt{azGraphics} package rather than \texttt{ggplot2}. The extra arguments given make its appearance similar to the others'. For more information see the help file available via \texttt{help(azplot.km)}.
+The KM option displays slightly differently from the other options because it uses a wrapper around \texttt{plot.survfit} (ensuring the censoring marks match the KM curves from SAS) rather than \texttt{ggplot2}. The extra arguments given make its appearance similar to the others'. See \texttt{help(kmPlotWrapper)} for further details.
 
 The Cox-Snell residuals can be calculated:
 <<>>=
@@ -296,10 +297,10 @@ The covariates are placed on the location parameter of the distribution, typical
 \subsection{Fitting}
 The fitting of models is rather flexible and the package makes it easy to fit the models, using the \texttt{fitModels} function, under the following options: 
 \begin{enumerate}
-  \item	Separate fitting for each arm
-  \item	Treatment as indicator in a univariate regression model
-  \item	Treatment as one of the covariates 
-  \item	Covariate model per treatment arm
+  \item	Separate distributions (i.e. models) fitted per arm
+  \item	One model with treatment as only predictor
+  \item	One model with treatment and other covariates 
+  \item	Separate distributions (i.e. models) fitted per arm with covariates
 \end{enumerate}
 
 For example, models may be fitted for a particular subgroup with arm as a factor together with the specified covariates:

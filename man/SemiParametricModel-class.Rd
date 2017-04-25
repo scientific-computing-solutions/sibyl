@@ -42,7 +42,7 @@ if not associated with any)}
 \item{\code{endPointDef}}{(list) defines name, time and censor column for the fitted
 endpoint}
 }}
+
 \seealso{
 \code{fitSemiParametric} for further information
 }
-

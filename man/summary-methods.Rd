@@ -4,6 +4,7 @@
 \name{summary}
 \alias{summary}
 \alias{summary,SemiParametricModel-method}
+\alias{summary}
 \alias{summary,SurvivalData-method}
 \title{Summary methods for Sibyl objects}
 \usage{
@@ -34,4 +35,3 @@ summary table}
 \description{
 Summary methods for Sibyl objects
 }
-

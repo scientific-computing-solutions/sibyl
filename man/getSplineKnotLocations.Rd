@@ -28,4 +28,3 @@ when class="FlexTable"}
 Given a SurvivalModel object, output a data frame
 containing the knot locations (NOT on log-scale) of the given model name
 }
-

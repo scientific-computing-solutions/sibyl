@@ -10,4 +10,3 @@ extrapolates these curves to larger surivival times.}
 Sibyl: The package fits parametric models to time-to-event data and
 extrapolates these curves to larger surivival times.
 }
-

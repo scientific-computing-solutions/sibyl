@@ -18,4 +18,3 @@ or NULL if no {subject, endpoint} pairs with zero times
 Output details of subjects with zero times
 for any endpoint
 }
-

@@ -1,11 +1,10 @@
-#' @importFrom graphics legend lines par
+#' @importFrom graphics legend lines par axis mtext strwidth text
 #' @importFrom methods new show slot
 #' @importFrom stats AIC BIC as.formula predict quantile formula median sd update.formula extractAIC resid integrate
 #' @importFrom utils str tail
 #' @import flexsurv
 #' @import ggplot2
 #' @import survival
-#' @importFrom azGraphics azplot.km
 #' @import azRMST
 #' @import ReporteRs
 NULL

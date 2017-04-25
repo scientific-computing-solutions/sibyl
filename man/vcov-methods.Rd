@@ -27,4 +27,3 @@ This option is ignored if class is not 'FlexTable'}
 \description{
 Method to return covariance matrix of estimated model parameters
 }
-

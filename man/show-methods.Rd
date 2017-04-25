@@ -4,6 +4,7 @@
 \name{show}
 \alias{show}
 \alias{show,ColumnDef-method}
+\alias{show}
 \alias{show,SurvivalData-method}
 \title{Show methods for Sibyl objects}
 \usage{
@@ -17,4 +18,3 @@
 \description{
 Show methods for Sibyl objects
 }
-

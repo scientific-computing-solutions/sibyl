@@ -3,6 +3,7 @@
 \docType{methods}
 \name{calcModelRmst}
 \alias{calcModelRmst}
+\alias{calcModelRmst}
 \alias{calcModelRmst,SurvivalModel-method}
 \title{Method to calculate model restricted means}
 \usage{
@@ -32,4 +33,3 @@ to round the entries to}
 \description{
 Method to calculate model restricted means
 }
-

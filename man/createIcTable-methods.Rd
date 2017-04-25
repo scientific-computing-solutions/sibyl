@@ -31,4 +31,3 @@ A table contain the AIC and BIC for each model
 \description{
 Method to create to create the information criteria table
 }
-

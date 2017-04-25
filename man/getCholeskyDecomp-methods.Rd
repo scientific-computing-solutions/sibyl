@@ -29,4 +29,3 @@ This option is ignored if class is not 'FlexTable'}
 Method to return Cholesky decomposition of variance-covariance
 matrix
 }
-

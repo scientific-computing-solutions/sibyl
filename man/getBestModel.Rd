@@ -20,4 +20,3 @@ If armAsFactor is FALSE and separate models are
 fitted then for each distribution calculate the sum of the
 AIC and returns the distribution with the lowest sum of AIC
 }
-

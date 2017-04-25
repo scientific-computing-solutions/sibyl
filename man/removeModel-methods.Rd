@@ -26,4 +26,3 @@ a \code{SurvivalModel} object
 \description{
 Method to remove fitted models from a SurvivalData object
 }
-

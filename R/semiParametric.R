@@ -61,13 +61,18 @@ setGeneric( "fitSemiParametric", function(object,...)
 ##' @param covariates (character vector) names of covariates used when fitting the Cox model if any
 ##' @param strata (character vector) names of covariates to be stratified when fitting the Cox model
 ##' @param conf.type ("none", "plain", "log" [default], "log-log") argument passed to survfit
+##' @param ties ("efron", "breslow" (default), "exact") argument passed to Coxph
 ##' @export
 setMethod("fitSemiParametric", signature(object="SurvivalData"),
   function(object, endPoint, subgroup = as.character(NA), covariates=character(0), strata=character(0),
-           conf.type=c("none", "plain", "log", "log-log")[3]){
+           conf.type=c("none", "plain", "log", "log-log")[3], ties=c("efron", "breslow", "exact")[2]){
 
     if(length(conf.type)!=1 || !conf.type %in% c("none", "plain", "log", "log-log")){
       stop("Invalid conf.type argument")
+    }
+    
+    if(length(ties)!=1 || !ties %in% c("efron", "breslow", "exact")){
+      stop("Invalid ties argument")
     }
     
     
@@ -146,7 +151,7 @@ setMethod("fitSemiParametric", signature(object="SurvivalData"),
     km <- survfit(formulaToFit,data=survData@subject.data, conf.type=conf.type)
     cox <- coxph(formulaToFit,
                  data=survData@subject.data, 
-                 ties="breslow", model=TRUE)
+                 ties=ties, model=TRUE)
 
     #fit Cox with strata
     #see note in code of coxphLogRankTest for possible refactoring 
@@ -159,7 +164,7 @@ setMethod("fitSemiParametric", signature(object="SurvivalData"),
                                       censorCol = endPointDef[["censorCol"]])
       coxWithStrata <- coxph(formulaToFit,
                              data=survData@subject.data, 
-                             ties="breslow", model=TRUE)
+                             ties=ties, model=TRUE)
     }
     
     #current coxph.null is not exported by survival so 
@@ -204,8 +209,10 @@ setMethod("getEndpointUnits", signature(object="SemiParametricModel"),
 
 
 ##' Method to extract the logrank test from the Cox model
-##' fit for the SemiParametricModel - this uses the strata and
-##' covariates parameters used when creating the SemiParametricModel object
+##' fit for the SemiParametricModel 
+##' @details This uses the strata and
+##' covariates parameters used when creating the SemiParametricModel object.
+##' The "ties" argument used by coxph is the value used when creating the SemiParametric object
 ##' @name coxphLogRankTest
 ##' @rdname coxphLogRankTest-methods
 ##' @param object (SemiParametricModel) The object which was created when
@@ -242,9 +249,11 @@ setMethod("coxphLogRankTest", "SemiParametricModel",function(object){
 })
 
 
-##' Method to calculate Cox-Snell residual, using surv(t, e) ~ arm, with no
+##' Method to calculate Cox-Snell residual
+##' @details This is calculated using using surv(t, e) ~ arm, with no
 ##' covariates or strata. Data is the subset of data contained in the
-##' SemiParametricModel object used.
+##' SemiParametricModel object used and the "ties" argument used by coxph is the value used 
+##' when creating the SemiParametric object
 ##' @name coxSnellRes
 ##' @rdname coxSnellRes-methods
 ##' @param object (SemiParametricModel) The object which was created when
@@ -267,27 +276,16 @@ setMethod("coxSnellRes", "SemiParametricModel", function(object){
     stop("Cannot calculate Cox-Snell resiudals for a one arm trial!")
   }
   
-  # Unpack data in object
-  timeCol      <- object@endPointDef[["timeCol"]]
+  #Extract event indicators
   censorCol    <- object@endPointDef[["censorCol"]]
   censorValues <- object@survData@subject.data[, censorCol]
   hasEvent     <- !censorValues
 
-  # Create formula for Kaplan-Meier estimator
-  formulaToFit <- survivalFormula(armAsFactor=TRUE,
-                                  covariates=character(0),
-                                  timeCol = timeCol,
-                                  censorCol = censorCol)
+  coxsnell.res <- hasEvent - resid(object@cox, type="martingale")
 
-  mod <- coxph(formula = formulaToFit,
-               data = object@survData@subject.data,
-               method = "breslow")
-
-  coxsnell.res <- hasEvent - resid(mod, type="martingale")
-
-  fitres <- survfit(coxph(Surv(coxsnell.res, hasEvent) ~ 1,
-                          method="breslow"),
-                          type="aalen")
+  survfit(coxph(Surv(coxsnell.res, hasEvent) ~ 1,
+                ties=object@cox$method),
+                type="aalen")
 })
 
 
@@ -349,12 +347,8 @@ extractCumHazData <- function(km, armNames, outputCI=FALSE, isSingleArm){
   #into separate arms
   #
   # Result is a list of data frames (one per stratum)
-  cumHazData <- lapply(seq_along(names(km$strata)), function(stratCounter){
-
+  lapply(seq_along(names(km$strata)), function(stratCounter){
     strat <- names(km$strata)[stratCounter]
     createOneArmData(index=(strataIndex==strat),  armName=armNames[stratCounter])
   })
-
-  return(cumHazData)
 }
-

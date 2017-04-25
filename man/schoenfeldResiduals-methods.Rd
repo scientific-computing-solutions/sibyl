@@ -3,6 +3,7 @@
 \docType{methods}
 \name{schoenfeldResiduals}
 \alias{schoenfeldResiduals}
+\alias{schoenfeldResiduals}
 \alias{schoenfeldResiduals,SemiParametricModel-method}
 \title{Method to calculate the Schoenfeld residuals for a SemiParametricModel
 object.}
@@ -27,4 +28,3 @@ object.
 Note there is no stratification used when calculating fitting 
 the Cox model
 }
-

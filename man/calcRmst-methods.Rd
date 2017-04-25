@@ -3,6 +3,7 @@
 \docType{methods}
 \name{calcRmst}
 \alias{calcRmst}
+\alias{calcRmst}
 \alias{calcRmst,SemiParametricModel-method}
 \title{Method to calculate RMST on subset of data contained in a
 SemiParametricModel object}
@@ -32,4 +33,3 @@ a FlexTable for output into a word document (depending on the class variable)
 Method to calculate RMST on subset of data contained in a
 SemiParametricModel object
 }
-

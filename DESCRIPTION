@@ -1,7 +1,7 @@
 Package: Sibyl
 Type: Package
 Title: Extrapolate Parametric Survival Curves
-Version: 1.0.99
+Version: 1.0.991
 Author: Paul Cooper, Nikolas Burkoff and Daniel Dalevi
 Maintainer: Daniel Dalevi <daniel.dalevi@astrazeneca.com>
 Description: The package fits parametric models to time-to-event data and
@@ -12,7 +12,7 @@ Suggests:
     testthat,
     knitr
 VignetteBuilder: knitr
-Collate:
+Collate: 
     'Sibyl-package.R'
     'columnDef.R'
     'survivalData.R'
@@ -23,6 +23,7 @@ Collate:
     'helpFitting.R'
     'helpStats.R'
     'icTable.R'
+    'kmPlotWrapper.R'
     'lifeTable.R'
     'semiParametric.R'
     'rmst.R'
@@ -34,13 +35,12 @@ Collate:
     'survivalDataOutput.R'
     'typeSpecificCovariateOutput.R'
     'validateSurvivalData.R'
-RoxygenNote: 5.0.1
+RoxygenNote: 6.0.1
 Imports:
     graphics,
     methods,
     stats,
-    utils,
-    azGraphics
+    utils
 Depends:
     flexsurv,
     ggplot2,

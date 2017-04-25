@@ -3,10 +3,10 @@
 \docType{methods}
 \name{coxphLogRankTest}
 \alias{coxphLogRankTest}
+\alias{coxphLogRankTest}
 \alias{coxphLogRankTest,SemiParametricModel-method}
 \title{Method to extract the logrank test from the Cox model
-fit for the SemiParametricModel - this uses the strata and
-covariates parameters used when creating the SemiParametricModel object}
+fit for the SemiParametricModel}
 \usage{
 coxphLogRankTest(object)
 
@@ -21,7 +21,10 @@ A dataframe containing the log rank test results
 }
 \description{
 Method to extract the logrank test from the Cox model
-fit for the SemiParametricModel - this uses the strata and
-covariates parameters used when creating the SemiParametricModel object
+fit for the SemiParametricModel
 }
-
+\details{
+This uses the strata and
+covariates parameters used when creating the SemiParametricModel object.
+The "ties" argument used by coxph is the value used when creating the SemiParametric object
+}

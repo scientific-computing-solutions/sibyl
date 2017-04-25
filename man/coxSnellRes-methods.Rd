@@ -3,10 +3,9 @@
 \docType{methods}
 \name{coxSnellRes}
 \alias{coxSnellRes}
+\alias{coxSnellRes}
 \alias{coxSnellRes,SemiParametricModel-method}
-\title{Method to calculate Cox-Snell residual, using surv(t, e) ~ arm, with no
-covariates or strata. Data is the subset of data contained in the
-SemiParametricModel object used.}
+\title{Method to calculate Cox-Snell residual}
 \usage{
 coxSnellRes(object)
 
@@ -23,8 +22,11 @@ generic}
 (survfit object) contains call and residuals
 }
 \description{
-Method to calculate Cox-Snell residual, using surv(t, e) ~ arm, with no
-covariates or strata. Data is the subset of data contained in the
-SemiParametricModel object used.
+Method to calculate Cox-Snell residual
 }
-
+\details{
+This is calculated using using surv(t, e) ~ arm, with no
+covariates or strata. Data is the subset of data contained in the
+SemiParametricModel object used and the "ties" argument used by coxph is the value used 
+when creating the SemiParametric object
+}

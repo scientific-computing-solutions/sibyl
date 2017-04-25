@@ -20,4 +20,3 @@ SurvivalData object}
 Calculate the maximum observed time 
 for a given endPoint
 }
-

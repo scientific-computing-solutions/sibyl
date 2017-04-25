@@ -205,7 +205,7 @@ setMethod("plot", signature(x="SemiParametricModel", y="missing"),
 
 #Output KM plot
 kmPlot <- function(x, ...){
-  azplot.km(x@km, ...)
+  kmPlotWrapper(x@km, ...)
 }
 
 
@@ -278,9 +278,25 @@ diagnosticPlot <- function(x, logTime, yval, use.facet, cumHaz=FALSE, armColours
   else{
     #plot the data and best fit line
     p <- p + geom_point()
-    p <- p + stat_smooth(method="lm", se=FALSE, size=1, aes(color=Arm))
+    p <- p + stat_smooth(method="lm", se=FALSE, size=1, aes(color=Arm, group=Arm))
+    
+    #have to extract the slope values 
+    statSmoothVals <- ggplot_build(p)$data[[length(ggplot_build(p)$data)]]
+    df <- split(statSmoothVals, statSmoothVals$group)
+    
+    slopeVals <- vapply(df, function(data){
+      N <- nrow(data)
+      if(N<2) return(as.numeric(NA))
+      (data$y[N] - data$y[1])/(data$x[N] - data$x[1])
+    }, FUN.VALUE = numeric(1))
+    
+    gradText <- if(length(armNames)==1) "gradient" else "gradients" 
+    
+    
+    slopeText <- paste("Best fit", gradText, "-", 
+                       paste(paste(armNames, round(slopeVals ,digits=4), sep=": "), collapse=", "))
+    p <- p + ggtitle(slopeText) + theme(plot.title = element_text(size=9)) 
   }
-  
   
   #Add xlabel
   p <- p + xlab(xlabel)

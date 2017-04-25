@@ -21,4 +21,3 @@ to display names (e.g. Lognormal)
 If name is not  lnorm, llogis, gengamma then the function returns
 the name unchanged except the first character capitalized.
 }
-

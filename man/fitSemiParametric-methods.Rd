@@ -3,6 +3,7 @@
 \docType{methods}
 \name{fitSemiParametric}
 \alias{fitSemiParametric}
+\alias{fitSemiParametric}
 \alias{fitSemiParametric,SurvivalData-method}
 \title{Method to fit semi-parametric model (Cox) and Kaplan-Meier
 estimator to a SurvivalData object}
@@ -12,7 +13,7 @@ fitSemiParametric(object, ...)
 \S4method{fitSemiParametric}{SurvivalData}(object, endPoint,
   subgroup = as.character(NA), covariates = character(0),
   strata = character(0), conf.type = c("none", "plain", "log",
-  "log-log")[3])
+  "log-log")[3], ties = c("efron", "breslow", "exact")[2])
 }
 \arguments{
 \item{object}{(SurvivalData) The object to fit the semi-parametric model
@@ -30,9 +31,10 @@ if not associated with any)}
 \item{strata}{(character vector) names of covariates to be stratified when fitting the Cox model}
 
 \item{conf.type}{("none", "plain", "log" [default], "log-log") argument passed to survfit}
+
+\item{ties}{("efron", "breslow" (default), "exact") argument passed to Coxph}
 }
 \description{
 Method to fit semi-parametric model (Cox) and Kaplan-Meier
 estimator to a SurvivalData object
 }
-

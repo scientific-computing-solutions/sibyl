@@ -27,4 +27,3 @@ to PFS2
 2) If endpoint OS exists then for all subjects who have an event for OS, their event
 time for OS must be >= their time for all other endpoints
 }
-

@@ -25,6 +25,10 @@ setMethod("schoenfeldResiduals", "SemiParametricModel",
     if(isSingleArm(object)){
       stop("Cannot compute Schoenfeld residuals for a one arm trial!")
     }
+    
+    if(object@cox$method == "exact"){
+      stop("Cannot compute Schoenfeld residuals if ties are handled using the 'exact' method")
+    }
     cox.zph(object@cox, ...)  
   }
 )
