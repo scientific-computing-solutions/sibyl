@@ -12,7 +12,7 @@
   outputModel = NULL, xMax = NULL, useCI = FALSE)
 
 \S4method{plot}{SemiParametricModel,missing}(x, type = c("KM", "CumHaz",
-  "LoglogS", "LogoddS", "InvNormS")[1], use.facet = TRUE, logTime = NULL,
+  "LoglogS", "LogoddS", "InvNormS", "Gompertz")[1], use.facet = TRUE,
   armColours = c("black", "red", "blue", "green", "yellow", "orange"), ...)
 }
 \arguments{
@@ -30,9 +30,7 @@ all data is displayed}
 \item{useCI}{(logical) TRUE if including CI on graph, FALSE otherwise}
 
 \item{type}{(character) the type of plot to be created; one of "KM",
-"CumHaz", "LoglogS", "LogoddS" or "InvNormS"}
-
-\item{logTime}{(logical) determines if x axis of plot is time or log(time)}
+"CumHaz", "LoglogS", "LogoddS" or "InvNormS", "Gompertz"}
 
 \item{armColours}{(vector of colours) the colours for the treatment arms for all
 graphs except the KM curve (use the col argument to set the colour for the KM graph)}

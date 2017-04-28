@@ -112,7 +112,10 @@ kmPlotWrapper <- function(x,
   axis(2, las=1, cex.axis=cex.axis)
   
   if(legend != FALSE){
-    legend(legend, legend=labels, col=col, lty=cex.lty, pt.cex=cex, cex=cex.legend, bty="n", text.col=col, pch=pch)
+    legend(legend, legend=rev(labels), 
+           col=rev(col), lty=cex.lty, pt.cex=cex, cex=cex.legend, bty="n", 
+           text.col=rev(col), 
+           pch=rev(pch))
   }
   
   if(n.at.risk == TRUE){
@@ -148,8 +151,8 @@ kmPlotWrapper <- function(x,
     for(i in 1:n.grps){
       this <- d2[[i]]
       w.adj <- strwidth('0', font=par('font'))/5 * nd[1:nrow(this)]
-      mtext(side=1, at=group.name.pos, text=labels[i], line=4+2*(i-1), cex=cex.nrisk, adj=0, col=col[i], las=1)
-      mtext(side=1, at=this$time+w.adj, text=this$n.risk, line=5+2*(i-1), cex=cex.nrisk, adj=1, col=col[i], las=1)
+      mtext(side=1, at=group.name.pos, text=labels[i], line=4+2*(n.grps-i), cex=cex.nrisk, adj=0, col=col[i], las=1)
+      mtext(side=1, at=this$time+w.adj, text=this$n.risk, line=5+2*(n.grps-i), cex=cex.nrisk, adj=1, col=col[i], las=1)
     }
   }
   

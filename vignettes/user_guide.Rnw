@@ -216,9 +216,10 @@ Three types of plot are available:
 
 where diagnostic plots may be:
 \begin{itemize}
-\item type=``loglogs"
-\item type=``InvNormS"
-\item type=``logodds"
+\item type=``loglogs" (for Weibull)
+\item type=``InvNormS" (for lognormal)
+\item type=``logodds" (for loglogistic)
+\item type=``gompertz" (for Gompertz) - note this graph requires an estimate for the hazard which is unlikely to be stable, and so this graph should be treated with extreme caution
 \end{itemize}
 
 The use.facet argument determines whether arms are plotted on on the same, or different, axes. For example:
@@ -228,8 +229,7 @@ plot(sP, type="KM", n.at.risk=TRUE,
      pch=NA, col=1:2, conf.int=FALSE, 
      labels=c("patchOnly","combination"))
 
-plot(sP, type="CumHaz", use.facet=FALSE,
-     logTime=FALSE)
+plot(sP, type="CumHaz", use.facet=FALSE)
 
 plot(sP, type="loglogs", use.facet=TRUE, armColours=c("blue","green"))
 @
@@ -246,6 +246,7 @@ and plotted:
 plot(coxSnellres$time, -log(coxSnellres$surv), 
      type='s', xlab="Cox-Snell Residuals", 
      ylab="Estimated Cumulative Hazard Function")
+grid()
 
 abline(0,1, col="red", lty=2 )
 @
@@ -255,6 +256,7 @@ As can the Schoenfeld residuals (no statra are used in the model fit):
 schoenfeld <- schoenfeldResiduals(sP)
 print(schoenfeld)
 plot(schoenfeld)
+grid()
 @
 
 

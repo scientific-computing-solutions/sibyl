@@ -45,7 +45,7 @@ setMethod("summary", signature(object="SemiParametricModel"),
       warning("Not calculating ratios/differences when there is more than one arm")
     }
     else if(nrow(results) == 2){
-      ratio <- apply(results,2,function(x){x[2]/x[1]})
+      ratio <- apply(results,2,function(x){x[1]/x[2]})
       difference <- apply(results, 2, function(x){x[2]-x[1]})
       results <- rbind(results,ratio=ratio)
       results <- rbind(results,difference=difference)
@@ -122,6 +122,18 @@ setMethod("summary", signature(object="SemiParametricModel"),
                                                    border.left.width=0, border.right.width=0))
             
     MyFTable <- addHeaderRow(MyFTable,hR)
+    
+    if(length(armNames)==2){
+      diffText <- paste0(armNames[2],"-\n",armNames[1])
+      ratioText <- paste0(armNames[2], ":\n", armNames[1])
+      hR2 <- FlexRow(c(rep("",3),ratioText,diffText),
+                     par.properties=parProperties(text.align="center",padding=1),
+                     text.properties = textProperties(font.weight = "bold"),
+                     cell.properties = cellProperties(border.top.width=0, border.bottom.width=0,
+                                                      border.left.width=0, border.right.width=0))
+      MyFTable <- addHeaderRow(MyFTable,hR2)
+    }
+    
             
     MyFTable
 })
@@ -175,28 +187,23 @@ kmsummary <- function(object, class, digits){
 ##' @aliases plot,SemiParametricModel,missing-method
 ##' @param x (SemiParametricModel object) contains data to be plotted
 ##' @param type (character) the type of plot to be created; one of "KM",
-##'        "CumHaz", "LoglogS", "LogoddS" or "InvNormS"
-##' @param logTime (logical) determines if x axis of plot is time or log(time)
+##'        "CumHaz", "LoglogS", "LogoddS" or "InvNormS", "Gompertz"
 ##' @param armColours (vector of colours) the colours for the treatment arms for all
 ##' graphs except the KM curve (use the col argument to set the colour for the KM graph)
 ##' @param ... arguments to be passed to azplot.km when type = "KM"
 ##' @export
 setMethod("plot", signature(x="SemiParametricModel", y="missing"),
-  function(x, type=c("KM","CumHaz","LoglogS","LogoddS","InvNormS")[1], 
-           use.facet=TRUE, logTime=NULL, 
+  function(x, type=c("KM","CumHaz","LoglogS","LogoddS","InvNormS", "Gompertz")[1], 
+           use.facet=TRUE, 
            armColours=c("black", "red", "blue", "green", "yellow", "orange"), ...){
-            
-    #set defualt logTime
-    if(is.null(logTime)){
-      logTime <- tolower(type) !="cumhaz"
-    }
-            
+    
     switch(tolower(type),
            "km"=kmPlot(x, ...),
-           "cumhaz"=diagnosticPlot(x,logTime, yval="-log(S)", use.facet, cumHaz=TRUE, armColours=armColours),
-           "loglogs"=diagnosticPlot(x, logTime, yval="log(-log(S))", use.facet, armColours=armColours),
-           "logodds"=diagnosticPlot(x, logTime, yval="log(S/(1-S))",  use.facet, armColours=armColours),
-           "invnorms"=diagnosticPlot(x, logTime, yval="qnorm(1-S)", use.facet, armColours=armColours),
+           "cumhaz"=diagnosticPlot(x,logTime=FALSE, yval="-log(S)", use.facet, cumHaz=TRUE, armColours=armColours),
+           "loglogs"=diagnosticPlot(x, logTime=TRUE, yval="log(-log(S))", use.facet, armColours=armColours),
+           "logodds"=diagnosticPlot(x, logTime=TRUE, yval="log(S/(1-S))",  use.facet, armColours=armColours),
+           "invnorms"=diagnosticPlot(x, logTime=TRUE, yval="qnorm(1-S)", use.facet, armColours=armColours),
+           "gompertz"=diagnosticPlot(x, logTime=FALSE, yval="-log(h)", use.facet, armColours=armColours),
            stop("type must equal one of KM, CumHaz, LoglogS or Logodds or InvNorms")
     )
   }
@@ -252,6 +259,11 @@ diagnosticPlot <- function(x, logTime, yval, use.facet, cumHaz=FALSE, armColours
   }
   else{
     data <- data[data$S > 0 & data$S < 1,]
+  }
+  
+  #for Gompertz estimate h(t)
+  if(yval=="-log(h)"){
+    data$h <- estimateHazard(data$S, data$t)
   }
   
   # Create the plot
