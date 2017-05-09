@@ -33,7 +33,7 @@ describing subgroups}
 \item{\code{covDef}}{(list of \code{ColumnDef}) definitions of columns in the
 subject.data data frame describing covariates}
 }}
+
 \seealso{
 \code{\link{SurvivalData}}
 }
-

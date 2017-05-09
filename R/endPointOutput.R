@@ -72,11 +72,12 @@ endPointsSummary <- function(object, digits){
   #Add headers
   subgroupDetails <- extractSubgroupTable(object)
   headers <- getHeaders(subgroupDetails, leftCol1=c("Events \n(%)",""),
-                        leftCol2=c("Endpoint", "Outcome"))
+                        leftCol2=c("Endpoint", "Outcome"), isSingleArm=isSingleArm(object))
   
-  MyFTable <- addHeaderRow(MyFTable,headers[[1]])
-  MyFTable <- addHeaderRow(MyFTable,headers[[2]])
-  
+  for(hR in headers){
+    MyFTable <- addHeaderRow(MyFTable,hR)
+  }
+ 
   MyFTable
 }
 

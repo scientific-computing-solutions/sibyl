@@ -101,11 +101,12 @@ createCovariateSummarySubTable <- function(object, requiredTypes, digits, htmlEn
   #sort out headers  
   subgroupDetails <- extractSubgroupTable(object)
   headers <- getHeaders(subgroupDetails, leftCol1="",
-                        leftCol2=c("Covariate", typeSpecificValues$leftCol2Header))
+                        leftCol2=c("Covariate", typeSpecificValues$leftCol2Header),
+                        isSingleArm=isSingleArm(object))
   
-  MyFTable <- addHeaderRow(MyFTable,headers[[1]])
-  MyFTable <- addHeaderRow(MyFTable,headers[[2]])
-  
+  for(hR in headers){
+    MyFTable <- addHeaderRow(MyFTable,hR)
+  }
   
   #Add footer
   if(typeSpecificValues$outputFooterString != ""){

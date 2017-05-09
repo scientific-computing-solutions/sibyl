@@ -150,6 +150,21 @@ test_that("can_create_SurvivalData_with_empty_strings_as_covariates",{
   
 })
 
+test_that("isSingleArm_returns_FALSE_for_survivalData_objects_with_more_than_one_arm",{
+  data("sibylData")
+  
+  inputs <- survivalDataConstuctorTestSetUp()
+  
+  survivalData <- SurvivalData(data=sibylData,
+                               armDef=inputs$arm,
+                               subjectCol="ID",
+                               covDef=inputs$cov,
+                               endPointNames="relapse",
+                               censorCol="ttr.cens",
+                               timeCol="ttr") 
+  expect_false(isSingleArm(survivalData))
+})
+
 
 context("SurvivalData_invalid_arguments")
 
@@ -443,25 +458,6 @@ test_that("error_if_subgroup_values_not_TRUE/FALSE_or_0/1", {
                      c(1, 1, -0.00001))
 
   errorIfColumnInvalid(sibylData, inputs, "sub.isMale", allInvalid)
-})
-
-test_that("error_if_fewer_than_2_levels_specified_for_arm", {
-  inputs <- survivalDataConstuctorTestSetUp()
-  inputs$arm@categories <- factor(c("patchOnly"), levels="patchOnly")
-
-  data("sibylData")
-
-  # Set all values to agree with defined levels, to avoid getting a different
-  # error (values don't match levels)
-  sibylData$grp <- "patchOnly"
-
-  expect_error(SurvivalData(data=sibylData,
-                            armDef=inputs$arm,
-                            subjectCol="ID",
-                            endPointNames="relapse",
-                            censorCol="ttr.cens",
-                            timeCol="ttr"))
-
 })
 
 test_that("error_if_no_data_for_a_defined_arm", {

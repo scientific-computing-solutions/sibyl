@@ -64,6 +64,10 @@ function(object,
     stop("armAsFactor must be logical")
   }
 
+  if(armAsFactor && isSingleArm(object)){
+    stop("armAsFactor must be FALSE for single arm trials")
+  }
+  
   if (!all(vapply(covariates, is.character, FUN.VALUE = TRUE))){
     stop("covariates must be a vector of character strings")
   }
@@ -213,6 +217,16 @@ addSplineOptionsToName <- function(modelNames, modelOptions){
   ifelse(modelNames!="spline",modelNames, paste("spline",splineVal$k,
                                     tolower(splineVal$scale),sep="_"))
 }
+
+##' @name isSingleArm
+##' @aliases isSingleArm,SurvivalModel-method
+##' @rdname isSingleArm-methods
+##' @export
+setMethod("isSingleArm", signature(object="SurvivalModel"),
+  function(object){
+    isSingleArm(object@survData)
+  }
+)
   
 ##' Method to remove fitted models from a SurvivalData object
 ##' @name removeModel

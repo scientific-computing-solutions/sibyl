@@ -260,3 +260,14 @@ test_that("attempting_to_remove_all_models_throws_error",{
   fit <- fitModels(survivalData,endPoint="relapse",model=c("weibull","lnorm"))
   expect_error(removeModel(fir,c("weibull","lnorm")))
 })
+
+test_that("isSingleArm_is_FALSE_if_more_than_one_arm",{
+  survivalData <- createSurvivalDataObject()
+  
+  fit <- fitModels(survivalData, endPoint="relapse", model=c("weibull","lnorm"), armAsFactor=TRUE)
+  expect_false(isSingleArm(fit))
+  
+  fit <- fitModels(survivalData, endPoint="relapse", model=c("weibull","lnorm"), armAsFactor=FALSE)
+  expect_false(isSingleArm(fit))
+  
+})

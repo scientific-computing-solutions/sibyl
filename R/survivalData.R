@@ -215,6 +215,15 @@ getArmNames <- function(survData){
   survData@armDef@categories
 }
 
+##' @name isSingleArm
+##' @aliases isSingleArm,SurvivalData-method
+##' @rdname isSingleArm-methods
+##' @export
+setMethod("isSingleArm", signature(object="SurvivalData"),
+  function(object){
+    length(object@armDef@categories)==1  
+  }
+)
 
 
 ##' Calculate the maximum observed time for each arm

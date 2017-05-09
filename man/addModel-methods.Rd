@@ -34,4 +34,3 @@ a \code{SurvivalModel} object
 \description{
 Method to add extra models to be fitted
 }
-

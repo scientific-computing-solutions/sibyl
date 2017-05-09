@@ -52,4 +52,3 @@ Method to create life table
 If the models include covariates a simulation procedure is required to generate averaged survival
 curves. If the models do not include covariates then \code{summary.flexsurvreg} is used
 }
-

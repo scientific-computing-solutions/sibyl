@@ -25,4 +25,3 @@ This option is ignored if class is not 'FlexTable'}
 \description{
 Method to create summary tables of coefficients for each model
 }
-

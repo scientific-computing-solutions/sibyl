@@ -50,4 +50,3 @@ covariateDef <- list(
 \seealso{
 \code{\link{ColumnDef-class}}
 }
-

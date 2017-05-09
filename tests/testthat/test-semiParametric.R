@@ -177,7 +177,15 @@ test_that("all_data_is_added_to_survdata_slot_if_no_subgroups",{
   expect_equal(sP@survData,survivalData)
 })
 
+test_that("isSingleArm_is_FALSE_if_created_from_SurvivalData_object_with_more_than_one_arm",{
+  survivalData <- createSurvivalDataObject()
+  
+  sP <- fitSemiParametric(survivalData,endPoint="relapse")
+  expect_false(isSingleArm(sP))
+})
+
 context("semiParametricFittingOutput")
+
 
 test_that("logrank_test_matches_independentCoxFit_with_strata",{
   survivalData <- createSurvivalDataObject()
@@ -234,7 +242,7 @@ test_that("outputs_one_dataframe_per_arm",{
   
   km <- survfit(Surv(ttr,!ttr.cens)~grp, data=sibylData)  
   
-  results <- extractCumHazData(km,armnames=c("B","A"))
+  results <- extractCumHazData(km,armNames=c("B","A"), isSingleArm=FALSE)
   
   expect_equal(length(results),2)
   expect_true(is.data.frame(results[[1]]))
@@ -245,7 +253,7 @@ test_that("adds_given_armnames_to_output_dataframe",{
   
   km <- survfit(Surv(ttr,!ttr.cens)~grp, data=sibylData)  
   
-  results <- extractCumHazData(km,armnames=c("B","A"))
+  results <- extractCumHazData(km,armNames=c("B","A"), isSingleArm=FALSE)
   
   expect_true(all(results[[1]]$Arm=="B"))
   expect_true(all(results[[2]]$Arm=="A"))
@@ -256,7 +264,7 @@ test_that("outputs_confidence_intervals_when_requested",{
   
   data("sibylData")
   km <- survfit(Surv(ttr,!ttr.cens)~grp, data=sibylData)  
-  results <- extractCumHazData(km,armnames=c("B","A"),outputCI = TRUE)
+  results <- extractCumHazData(km,armNames=c("B","A"),outputCI = TRUE, isSingleArm=FALSE)
   expect_equal(colnames(results[[1]]),c("t","S","Arm","lower","upper"))
   
 })
@@ -264,7 +272,7 @@ test_that("outputs_confidence_intervals_when_requested",{
 test_that("t0_S1_row_is added_to_dataframes",{
   data("sibylData")
   km <- survfit(Surv(ttr,!ttr.cens)~grp, data=sibylData)  
-  results <- extractCumHazData(km,armnames=c("B","A"))
+  results <- extractCumHazData(km,armNames=c("B","A"), isSingleArm=FALSE)
   
   expect_equal(results[[1]][1,1],0) #t
   expect_equal(results[[1]][1,2],1) #S

@@ -127,7 +127,8 @@ subgroupsSummary <- function(object, colWidth=1.5){
 #headings on top header row
 #leftCol2 a length 2 character vector for the two left-most column
 #headings on second header row
-getHeaders <- function(subgroupDetails, leftCol1, leftCol2){
+#isSingleArm is logical - whether the table is being created for a singleArm trial
+getHeaders <- function(subgroupDetails, leftCol1, leftCol2, isSingleArm){
   
   numArms <- ncol(subgroupDetails)
   numSubgroups <- nrow(subgroupDetails)-1
@@ -140,6 +141,15 @@ getHeaders <- function(subgroupDetails, leftCol1, leftCol2){
   headerNames <- paste("\n(total=",rowSums(subgroupDetails),")",sep="")
   headerNames <- paste(rownames(subgroupDetails), headerNames)
   
+  if(isSingleArm){
+    hR <- FlexRow(c(leftCol2,headerNames), 
+                  par.properties=parProperties(text.align="center"),
+                  text.properties = textProperties(font.weight = "bold"))
+    
+    return(list(hR))
+  }
+  
+  
   hR <- FlexRow(c(leftCol1,headerNames),colspan=c(leftSpan,rep(numArms,1+numSubgroups)), 
                 par.properties=parProperties(text.align="center"),
                 text.properties = textProperties(font.weight = "bold"))
@@ -150,9 +160,10 @@ getHeaders <- function(subgroupDetails, leftCol1, leftCol2){
   
   #then arm header (second header row)
   armHeaders <- vapply(seq_len(nrow(subgroupDetails)),
-                       function(x){
-                         paste(colnames(subgroupDetails),"\n(total=",subgroupDetails[x,],")",sep="")  
-                       },FUN.VALUE=character(numArms))
+                     function(x){
+                       paste(colnames(subgroupDetails),"\n(total=",subgroupDetails[x,],")",sep="")  
+               },FUN.VALUE=character(numArms))
+  
   
   hR2 <- FlexRow(c(leftCol2,armHeaders),
                  par.properties=parProperties(text.align="center",padding=1),

@@ -48,4 +48,3 @@ See Vignette for further details
 \seealso{
 \code{\link{SurvivalData-class}}
 }
-

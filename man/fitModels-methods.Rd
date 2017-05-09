@@ -42,4 +42,3 @@ A \code{SurvivalModel} object
 \description{
 Method to create the \code{SurvivalModel} object
 }
-

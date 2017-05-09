@@ -21,4 +21,3 @@ for each arm
 Calculate the maximum observed time for each arm
 for a given endPoint and output the minimum
 }
-

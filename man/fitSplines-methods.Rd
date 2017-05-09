@@ -28,4 +28,3 @@ A SurvivalModel object with different spline model fits
 \description{
 Method to create SurvivalModel object with different spline models
 }
-

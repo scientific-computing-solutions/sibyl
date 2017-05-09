@@ -1,11 +1,10 @@
-#' @importFrom graphics legend lines par
+#' @importFrom graphics legend lines par axis mtext strwidth text
 #' @importFrom methods new show slot
-#' @importFrom stats AIC BIC as.formula predict quantile formula median sd update.formula extractAIC resid integrate
+#' @importFrom stats smooth.spline AIC BIC as.formula predict quantile formula median sd update.formula extractAIC resid integrate
 #' @importFrom utils str tail
 #' @import flexsurv
 #' @import ggplot2
 #' @import survival
-#' @importFrom azGraphics azplot.km
 #' @import azRMST
 #' @import ReporteRs
 NULL
@@ -38,6 +37,17 @@ NULL
 #' } 
 "sibylData"
 
+##' Method to check whether an object contains data/models for a one arm clinical
+##' trial
+##' @rdname isSingleArm-methods
+##' @name isSingleArm
+##' @param object The object to check whether it contains the details for a
+##' single arm trial
+##' @return logical, whether the object was a single arm trial
+##' @export
+setGeneric( "isSingleArm", function(object)
+  standardGeneric("isSingleArm"))
+
 
 ##' Method to extract the endpoint units for a given object
 ##' @rdname getEndpointUnits-methods
@@ -47,7 +57,4 @@ NULL
 ##' @export
 setGeneric( "getEndpointUnits", function(object)
   standardGeneric("getEndpointUnits"))
-
-
-
 

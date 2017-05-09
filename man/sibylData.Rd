@@ -28,4 +28,3 @@ This data set is loosely based on an example
 data frame from the asaur package
 }
 \keyword{datasets}
-

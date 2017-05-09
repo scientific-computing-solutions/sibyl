@@ -32,18 +32,20 @@ setMethod("summary", signature(object="SemiParametricModel"),
             
     #bind on the number of events
     summaryKM <- summary(object@km)
-    results <- cbind(summaryKM$table[,"events"],results)
+    #notice the comma in the line below to handle different cases
+    eventDetails <- if(isSingleArm(object)) summaryKM$table["events"] else summaryKM$table[,"events"] 
+    results <- cbind(eventDetails, results)
             
     #set row/column names
     rownames(results) <- getArmNames(object@survData)
     colnames(results) <- c("Total Events","Median time to event","Lower.CI","Upper.CI")
             
     #calculate ratios
-    if(nrow(results)!=2){
+    if(nrow(results) > 2){
       warning("Not calculating ratios/differences when there is more than one arm")
     }
-    else{
-      ratio <- apply(results,2,function(x){x[2]/x[1]})
+    else if(nrow(results) == 2){
+      ratio <- apply(results,2,function(x){x[1]/x[2]})
       difference <- apply(results, 2, function(x){x[2]-x[1]})
       results <- rbind(results,ratio=ratio)
       results <- rbind(results,difference=difference)
@@ -120,6 +122,18 @@ setMethod("summary", signature(object="SemiParametricModel"),
                                                    border.left.width=0, border.right.width=0))
             
     MyFTable <- addHeaderRow(MyFTable,hR)
+    
+    if(length(armNames)==2){
+      diffText <- paste0(armNames[2],"-\n",armNames[1])
+      ratioText <- paste0(armNames[2], ":\n", armNames[1])
+      hR2 <- FlexRow(c(rep("",3),ratioText,diffText),
+                     par.properties=parProperties(text.align="center",padding=1),
+                     text.properties = textProperties(font.weight = "bold"),
+                     cell.properties = cellProperties(border.top.width=0, border.bottom.width=0,
+                                                      border.left.width=0, border.right.width=0))
+      MyFTable <- addHeaderRow(MyFTable,hR2)
+    }
+    
             
     MyFTable
 })
@@ -131,7 +145,10 @@ kmsummary <- function(object, class, digits){
   #get summary
   s <- summary(object@km, censored=TRUE)
   #coerce to data frame
-  summaryData <- data.frame(arm=s$strata,time=s$time,survival=s$surv,
+  
+  arm <- if(isSingleArm(object)) getArmNames(object@survData) else s$strata
+  
+  summaryData <- data.frame(arm=arm,time=s$time,survival=s$surv,
                             n.risk=s$n.risk,n.event=s$n.event, std.err=s$std.err,
                             x=s$lower, y=s$upper)
   colnames(summaryData)[7:8] <- paste(c("lower","upper"), "95% CI")
@@ -170,28 +187,23 @@ kmsummary <- function(object, class, digits){
 ##' @aliases plot,SemiParametricModel,missing-method
 ##' @param x (SemiParametricModel object) contains data to be plotted
 ##' @param type (character) the type of plot to be created; one of "KM",
-##'        "CumHaz", "LoglogS", "LogoddS" or "InvNormS"
-##' @param logTime (logical) determines if x axis of plot is time or log(time)
+##'        "CumHaz", "LoglogS", "LogoddS" or "InvNormS", "Gompertz"
 ##' @param armColours (vector of colours) the colours for the treatment arms for all
 ##' graphs except the KM curve (use the col argument to set the colour for the KM graph)
 ##' @param ... arguments to be passed to azplot.km when type = "KM"
 ##' @export
 setMethod("plot", signature(x="SemiParametricModel", y="missing"),
-  function(x, type=c("KM","CumHaz","LoglogS","LogoddS","InvNormS")[1], 
-           use.facet=TRUE, logTime=NULL, 
+  function(x, type=c("KM","CumHaz","LoglogS","LogoddS","InvNormS", "Gompertz")[1], 
+           use.facet=TRUE, 
            armColours=c("black", "red", "blue", "green", "yellow", "orange"), ...){
-            
-    #set defualt logTime
-    if(is.null(logTime)){
-      logTime <- tolower(type) !="cumhaz"
-    }
-            
+    
     switch(tolower(type),
            "km"=kmPlot(x, ...),
-           "cumhaz"=diagnosticPlot(x,logTime, yval="-log(S)", use.facet, cumHaz=TRUE, armColours=armColours),
-           "loglogs"=diagnosticPlot(x, logTime, yval="log(-log(S))", use.facet, armColours=armColours),
-           "logodds"=diagnosticPlot(x, logTime, yval="log(S/(1-S))",  use.facet, armColours=armColours),
-           "invnorms"=diagnosticPlot(x, logTime, yval="qnorm(1-S)", use.facet, armColours=armColours),
+           "cumhaz"=diagnosticPlot(x,logTime=FALSE, yval="-log(S)", use.facet, cumHaz=TRUE, armColours=armColours),
+           "loglogs"=diagnosticPlot(x, logTime=TRUE, yval="log(-log(S))", use.facet, armColours=armColours),
+           "logodds"=diagnosticPlot(x, logTime=TRUE, yval="log(S/(1-S))",  use.facet, armColours=armColours),
+           "invnorms"=diagnosticPlot(x, logTime=TRUE, yval="qnorm(1-S)", use.facet, armColours=armColours),
+           "gompertz"=diagnosticPlot(x, logTime=FALSE, yval="-log(h)", use.facet, armColours=armColours),
            stop("type must equal one of KM, CumHaz, LoglogS or Logodds or InvNorms")
     )
   }
@@ -200,7 +212,7 @@ setMethod("plot", signature(x="SemiParametricModel", y="missing"),
 
 #Output KM plot
 kmPlot <- function(x, ...){
-  azplot.km(x@km, ...)
+  kmPlotWrapper(x@km, ...)
 }
 
 
@@ -212,6 +224,11 @@ kmPlot <- function(x, ...){
 #use.facet is TRUE if splitting the data into separate graphs per arm
 #cumHaz is true if we are outputting cumulative hazard plot
 diagnosticPlot <- function(x, logTime, yval, use.facet, cumHaz=FALSE, armColours){
+  
+  #cannot use facet if this is a single arm trial
+  if(use.facet && isSingleArm(x)){
+    stop("use.facet must be FALSE when trial is a single arm trial")
+  }
   
   #R-cmd-check thinks t, s, model, ... are global
   #variables inside the ggplot commands so complains about them
@@ -227,11 +244,11 @@ diagnosticPlot <- function(x, logTime, yval, use.facet, cumHaz=FALSE, armColours
   
   #extract the cumulative hazard data from the survfit object
   armNames <- getArmNames(x@survData)
-  data <- extractCumHazData(x@km, armNames)
+  data <- extractCumHazData(x@km, armNames, isSingleArm=isSingleArm(x))
   
   # Concatenate list of data frames row-wise into one big data frame
   data <- do.call("rbind", data)
-  
+ 
   #remove the edge cases
   if(logTime){
     data <- data[data$t > 0,]
@@ -242,6 +259,11 @@ diagnosticPlot <- function(x, logTime, yval, use.facet, cumHaz=FALSE, armColours
   }
   else{
     data <- data[data$S > 0 & data$S < 1,]
+  }
+  
+  #for Gompertz estimate h(t)
+  if(yval=="-log(h)"){
+    data$h <- estimateHazard(data$S, data$t)
   }
   
   # Create the plot
@@ -268,9 +290,25 @@ diagnosticPlot <- function(x, logTime, yval, use.facet, cumHaz=FALSE, armColours
   else{
     #plot the data and best fit line
     p <- p + geom_point()
-    p <- p + stat_smooth(method="lm", se=FALSE, size=1, aes(color=Arm))
+    p <- p + stat_smooth(method="lm", se=FALSE, size=1, aes(color=Arm, group=Arm))
+    
+    #have to extract the slope values 
+    statSmoothVals <- ggplot_build(p)$data[[length(ggplot_build(p)$data)]]
+    df <- split(statSmoothVals, statSmoothVals$group)
+    
+    slopeVals <- vapply(df, function(data){
+      N <- nrow(data)
+      if(N<2) return(as.numeric(NA))
+      (data$y[N] - data$y[1])/(data$x[N] - data$x[1])
+    }, FUN.VALUE = numeric(1))
+    
+    gradText <- if(length(armNames)==1) "gradient" else "gradients" 
+    
+    
+    slopeText <- paste("Best fit", gradText, "-", 
+                       paste(paste(armNames, round(slopeVals ,digits=4), sep=": "), collapse=", "))
+    p <- p + ggtitle(slopeText) + theme(plot.title = element_text(size=9)) 
   }
-  
   
   #Add xlabel
   p <- p + xlab(xlabel)
@@ -278,7 +316,7 @@ diagnosticPlot <- function(x, logTime, yval, use.facet, cumHaz=FALSE, armColours
   # Format background and borders
   p <- p + theme(panel.background = element_blank(),
                  panel.border = element_rect(colour = "black", fill = NA),
-                 panel.grid.major = element_blank(),
+                 panel.grid.major = element_line(colour="grey", linetype="dotted"),
                  panel.grid.minor = element_blank())
   
   p

@@ -22,7 +22,7 @@ set of allowed categories, ordered as required by the user}
 
 \item{\code{unit}}{(character) The unit, if any, associated with the data in this column}
 }}
+
 \seealso{
 \code{\link{ColumnDef}}
 }
-
