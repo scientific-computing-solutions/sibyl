@@ -30,6 +30,7 @@ Collate:
     'rmst.R'
     'schoenfeld.R'
     'semiParametricOutput.R'
+    'sibylKMplot.R'
     'specificEndpointValidation.R'
     'splineFit.R'
     'summariseCoeffs.R'
