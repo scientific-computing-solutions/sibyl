@@ -134,7 +134,7 @@ setMethod("fitSemiParametric", signature(object="SurvivalData"),
     # Check each arm has events
     censorCol <- endPointDef[["censorCol"]]
     hasEvents <- vapply(armValues,
-                        function(a){any(survData@subject.data[survData@subject.data[, armCol] == a, censorCol])},
+                        function(a){any(!survData@subject.data[survData@subject.data[, armCol] == a, censorCol])},
                         FUN.VALUE = FALSE)
     if (!all(hasEvents)){
       stop(paste0("The following arms have no events in subgroup '", subgroup, "': ",
