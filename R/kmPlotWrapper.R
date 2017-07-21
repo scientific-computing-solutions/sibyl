@@ -80,7 +80,7 @@ kmPlotWrapper <- function(x,
     if( n.grps == 1 ) col[3] <- col[2]
   }
   # This is to enforce that all censor events are showed in the KM plot.
-  if(mark.time==TRUE){mark.time=x$time[x$n.censor > 0]}
+  #if(mark.time==TRUE){mark.time=x$time[x$n.censor > 0]}
   
   xaxt <- NULL  # Flag for keeping x-axis
   if(!is.null(times)) xaxt <- "n"  # Flag for removing x-axis in the plot if user specified time
