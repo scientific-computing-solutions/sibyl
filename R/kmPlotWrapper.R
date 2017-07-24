@@ -79,9 +79,7 @@ kmPlotWrapper <- function(x,
     col <- c("#F8766D", "#C49A00", "#53B400", "#02C094", "#00B6EB", "#A58AFF", "#FB61D7")
     if( n.grps == 1 ) col[3] <- col[2]
   }
-  # This is to enforce that all censor events are showed in the KM plot.
-  if(mark.time==TRUE){mark.time=x$time[x$n.censor > 0]}
-  
+
   xaxt <- NULL  # Flag for keeping x-axis
   if(!is.null(times)) xaxt <- "n"  # Flag for removing x-axis in the plot if user specified time
   
@@ -102,7 +100,7 @@ kmPlotWrapper <- function(x,
     on.exit(par(list(plt = plt.old, mar=mar.old)))
   }
   
-  plot(x, main=main, xlab=xlab, ylab=ylab, lty=lty, col=col, mark=pch, cex=cex, 
+  .sibylKMplot(x, main=main, xlab=xlab, ylab=ylab, lty=lty, col=col, mark=pch, cex=cex, 
        xaxt=xaxt, yaxt="n", yaxs="i", fun=fun, mark.time=mark.time, ...)
   
   # Display time points specified by user (or at quartiles)
