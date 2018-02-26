@@ -16,9 +16,8 @@
 ##' @param col Color codes for the Kaplan-Meier curves. Valid values are 1, 2, 3, 
 ##'        ..., with a character string giving the color name (e.g., "red").
 ##' @param mark.time Default TRUE; Controls the labeling of the curves. If set to 
-##'        FALSE, no labeling is done. If TRUE, then curves are marked at each 
-##'        censoring time as defined by \code{x$time[x$n.censor > 0]}. If mark.time 
-##'        is a numeric vector, then curves are marked at the specified time points.
+##'        FALSE, no labeling is done. If mark.time is a numeric vector, then curves
+##'        are marked at the specified time points.
 ##' @param cex Character expansion for plot symbols. The bigger the value, the 
 ##'        larger the characters on the plot. (1)
 ##' @param cex.legend Character expansion for the legend information. (0.9)
@@ -100,7 +99,7 @@ kmPlotWrapper <- function(x,
     on.exit(par(list(plt = plt.old, mar=mar.old)))
   }
   
-  .sibylKMplot(x, main=main, xlab=xlab, ylab=ylab, lty=lty, col=col, mark=pch, cex=cex, 
+  plot(x, main=main, xlab=xlab, ylab=ylab, lty=lty, col=col, mark=pch, cex=cex, 
        xaxt=xaxt, yaxt="n", yaxs="i", fun=fun, mark.time=mark.time, ...)
   
   # Display time points specified by user (or at quartiles)

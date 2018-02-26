@@ -11,7 +11,7 @@ SemiParametricModel object}
 calcRmst(object, ...)
 
 \S4method{calcRmst}{SemiParametricModel}(object, class = c("rmst",
-  "FlexTable")[2], digits = 3, ...)
+  "FlexTable")[2], digits = 3, pval_digits = digits, ...)
 }
 \arguments{
 \item{object}{(SemiParametricModel) The object which was created when
@@ -24,6 +24,8 @@ generic}
 
 \item{digits}{(numeric default=3) if outputting a FlexTable then the number of digits
 to round the entries to}
+
+\item{pval_digits}{(numeric default = same value as digits argument) decimal place rounding of p value}
 }
 \value{
 (rmst object) contains list of RMST values, differences and call or

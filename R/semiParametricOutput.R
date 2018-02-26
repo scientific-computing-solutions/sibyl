@@ -45,7 +45,7 @@ setMethod("summary", signature(object="SemiParametricModel"),
       warning("Not calculating ratios/differences when there is more than one arm")
     }
     else if(nrow(results) == 2){
-      ratio <- apply(results,2,function(x){x[1]/x[2]})
+      ratio <- apply(results,2,function(x){x[2]/x[1]})
       difference <- apply(results, 2, function(x){x[2]-x[1]})
       results <- rbind(results,ratio=ratio)
       results <- rbind(results,difference=difference)
@@ -58,7 +58,6 @@ setMethod("summary", signature(object="SemiParametricModel"),
     armNames <- as.character(getArmNames(object@survData))
     numArms <- length(armNames)
     
-    results[,1:numArms] <- results[,numArms:1]
     colnames(results)[1:numArms] <- colnames(results)[numArms:1]
             
     if(class=="data.frame"){
@@ -112,7 +111,7 @@ setMethod("summary", signature(object="SemiParametricModel"),
     armHeaders <- paste(armNames,"\n(total=",armCounts,")",sep="")
             
     if(length(armNames)==2){
-      armHeaders <- c(rev(armHeaders),"Ratio", "Difference")
+      armHeaders <- c(armHeaders,"Ratio", "Difference")
     }
             
     hR <- FlexRow(c("",armHeaders),

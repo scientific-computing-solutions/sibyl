@@ -67,6 +67,8 @@ armDef <- ColumnDef(columnName = "grp",
 @
 This gives a message that categories have been specified for a categorical variable, but not as a factor. The danger of defining them as a vector rather than a factor is that their order might not be preserved through all the package functionality. The message makes explicit what order has been assumed for the categories throughout the package.
 
+To change the reference arm, instead of defining levels, you can move the factor order around to switch the reference arm i.e. categories = c("combination","patchOnly")).
+
 If we provide categories as a factor, or define a non-categorical column, then this warning does not appear as shown below where we define the covariates.
 <<>>=
 covariateDef <- list(
@@ -233,7 +235,7 @@ plot(sP, type="CumHaz", use.facet=FALSE)
 
 plot(sP, type="loglogs", use.facet=TRUE, armColours=c("blue","green"))
 @
-The KM option displays slightly differently from the other options because it uses a wrapper around \texttt{plot.survfit} (ensuring the censoring marks match the KM curves from SAS) rather than \texttt{ggplot2}. The extra arguments given make its appearance similar to the others'. See \texttt{help(kmPlotWrapper)} for further details.
+The KM option displays slightly differently from the other options because it uses a wrapper around \texttt{plot.survfit} rather than \texttt{ggplot2}. The extra arguments given make its appearance similar to the others'. See \texttt{help(kmPlotWrapper)} for further details.
 
 The Cox-Snell residuals can be calculated:
 <<>>=
