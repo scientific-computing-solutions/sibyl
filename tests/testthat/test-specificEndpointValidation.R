@@ -154,7 +154,7 @@ test_that("single_zero_time_is_output_as_warning_string",{
                      OTHER_TIME=c(23,1,NA,23,12,56))
   sD <- simpleSurvivalDataCreation(data,endPoint=c("OS","OTHER"))
   expect_equal(getZeroTimes(sD),
-               "WARNING: Subject 1 has time=0 for endpoint OS")
+               "WARNING: Subject 1 has time=0 for endpoint OS and this subject will not be used when fitting parametric models for this endpoint")
 })
 
 test_that("zero_times_in_multiple_subjects_outputs_each_as_a_warning_string",{
@@ -164,10 +164,9 @@ test_that("zero_times_in_multiple_subjects_outputs_each_as_a_warning_string",{
                      OTHER_TIME=c(23,0,NA,0,12,56))
   sD <- simpleSurvivalDataCreation(data,endPoint=c("OS","OTHER"))
   expect_equal(getZeroTimes(sD),
-               paste("WARNING: Subject 1 has time=0 for endpoint OS",
-                     "WARNING: Subject 2 has time=0 for endpoint OTHER and had an event",
-                     "WARNING: Subject 4 has time=0 for endpoint OTHER",sep="\n"))
-
+               paste("WARNING: Subject 1 has time=0 for endpoint OS and this subject will not be used when fitting parametric models for this endpoint",
+                     "WARNING: Subject 2 has time=0 for endpoint OTHER and had an event and this subject will not be used when fitting parametric models for this endpoint",
+                     "WARNING: Subject 4 has time=0 for endpoint OTHER and this subject will not be used when fitting parametric models for this endpoint",sep="\n"))
 })
 
 
@@ -178,7 +177,7 @@ test_that("zero_times_for_multiple_endpoints_for_same_subject_outputs_all_warnin
                      OTHER_TIME=c(0,56,NA,1,12,56))
   sD <- simpleSurvivalDataCreation(data,endPoint=c("OS","OTHER"))
   expect_equal(getZeroTimes(sD),
-               paste("WARNING: Subject 1 has time=0 for endpoint OS",
-                     "WARNING: Subject 1 has time=0 for endpoint OTHER", sep="\n")
+               paste("WARNING: Subject 1 has time=0 for endpoint OS and this subject will not be used when fitting parametric models for this endpoint",
+                     "WARNING: Subject 1 has time=0 for endpoint OTHER and this subject will not be used when fitting parametric models for this endpoint", sep="\n")
   )
 })

@@ -300,7 +300,8 @@ getZeroTimes <- function(object){
         if(!is.na(oneSubject[endPoint$timeCol]) && as.numeric(oneSubject[endPoint$timeCol])==0){
           ans <- paste("WARNING: Subject",trimws(oneSubject["subject"]),"has time=0 for endpoint", endPointName)
           if(!as.logical(trimws(oneSubject[endPoint$censorCol]))) ans <- paste(ans, "and had an event")
-          ans  
+          ans <- paste(ans, "and this subject will not be used when fitting parametric models for this endpoint")
+          ans
         }    
       })
     

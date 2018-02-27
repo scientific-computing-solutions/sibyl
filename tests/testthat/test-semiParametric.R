@@ -194,7 +194,7 @@ test_that("logrank_test_matches_independentCoxFit_with_strata",{
   
   coxWithStrata <- coxph(Surv(ttr,!ttr.cens)~ arm + strata(race),
                          data=survivalData@subject.data)
-  summStrata <- summary(coxWithStrata)[9]$logtest
+  summStrata <- summary(coxWithStrata)$sctest
   names(summStrata) <- NULL
   
   expect_equal(logrankOutput[2,1],summStrata[1])
@@ -210,7 +210,7 @@ test_that("logrank_test_with_no_strata_matches_even_strata_also_used",{
   
   cox <- coxph(Surv(ttr,!ttr.cens)~ arm ,
                          data=survivalData@subject.data)
-  summ <- summary(cox)[9]$logtest
+  summ <- summary(cox)$sctest
   names(summ) <- NULL
   
   expect_equal(logrankOutput[1,1],summ[1])
@@ -227,10 +227,10 @@ test_that("number_of_events_is_correctly_calculated",{
   
   subgroupData <- survivalData@subject.data[survivalData@subject.data$sub.isMale,]
   
-  numEvents <- c(patchOnly=nrow(subgroupData[subgroupData$arm=="patchOnly" & !subgroupData$ttr.cens,]),
-                 combination=nrow(subgroupData[subgroupData$arm=="combination" & !subgroupData$ttr.cens,]))
-  
-  expect_equal(summarysP[1,2:1],numEvents)
+  numEvents <- c(combination=nrow(subgroupData[subgroupData$arm=="patchOnly" & !subgroupData$ttr.cens,]),
+                 patchOnly=nrow(subgroupData[subgroupData$arm=="combination" & !subgroupData$ttr.cens,]))
+
+  expect_equal(summarysP[1,1:2],numEvents)
   
 })
 

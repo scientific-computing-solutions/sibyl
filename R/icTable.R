@@ -74,6 +74,7 @@ setMethod("createIcTable","SurvivalModel",
       numCols <- 3
       arms <- "ALL"
     }
+    arms <- gsub("(.{15})", "\\1\n", arms)
     
     numRows <- length(unique(icValues$Model))
     

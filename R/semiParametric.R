@@ -239,10 +239,10 @@ setMethod("coxphLogRankTest", "SemiParametricModel",function(object){
   }
   
   if(length(object@strata)==0){
-    return(as.data.frame(t(data.frame(summary(object@cox)[9]))))
+    return(as.data.frame(t(data.frame(summary(object@cox)$sctest))))
   }
-  result <- cbind(data.frame(summary(object@cox)[9]),
-        data.frame(summary(object@coxWithStrata)[9]))
+  result <- cbind(data.frame(summary(object@cox)$sctest),
+        data.frame(summary(object@coxWithStrata)$sctest))
   
   colnames(result) <- c("No strata/covariates", "With strata/covariates")
   as.data.frame(t(result))
@@ -250,7 +250,7 @@ setMethod("coxphLogRankTest", "SemiParametricModel",function(object){
 
 
 ##' Method to calculate Cox-Snell residual
-##' @details This is calculated using using surv(t, e) ~ arm, with no
+##' @details This is calculated using surv(t, e) ~ arm, with no
 ##' covariates or strata. Data is the subset of data contained in the
 ##' SemiParametricModel object used and the "ties" argument used by coxph is the value used 
 ##' when creating the SemiParametric object
@@ -287,6 +287,19 @@ setMethod("coxSnellRes", "SemiParametricModel", function(object){
                 ties=object@cox$method),
                 type="aalen")
 })
+
+##' Method to calculate max endpoint time for semiparametric data
+##' @name getMaxEndpointTime
+##' @aliases getMaxEndpointTime,SemiParametricModel-method
+##' @rdname getMaxEndpointTime-methods
+##' @export
+getMaxEndpointTime <- function(object){
+  
+  timeCol    <- object@endPointDef[["timeCol"]]
+  timeValues <- object@survData@subject.data[, timeCol]
+  
+  round(max(timeValues), digits=2)  
+  }
 
 
 # For each arm, extract the data frame of time v probability of survival from

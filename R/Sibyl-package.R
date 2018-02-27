@@ -1,6 +1,6 @@
-#' @importFrom graphics legend lines par axis mtext strwidth text
+#' @importFrom graphics legend lines par axis mtext strwidth text points segments
 #' @importFrom methods new show slot
-#' @importFrom stats smooth.spline AIC BIC as.formula predict quantile formula median sd update.formula extractAIC resid integrate
+#' @importFrom stats smooth.spline AIC BIC as.formula predict quantile formula median sd update.formula extractAIC resid integrate approx
 #' @importFrom utils str tail
 #' @import flexsurv
 #' @import ggplot2

@@ -155,8 +155,9 @@ setGeneric("calcRmst", function(object, ...){
 ##' @param class ('rmst' or "FlexTable' (default)) type of output required
 ##' @param digits (numeric default=3) if outputting a FlexTable then the number of digits
 ##' to round the entries to
+##' @param pval_digits (numeric default = same value as digits argument) decimal place rounding of p value
 ##' @export
-setMethod("calcRmst", "SemiParametricModel", function(object,class=c("rmst","FlexTable")[2], digits=3, ...){
+setMethod("calcRmst", "SemiParametricModel", function(object,class=c("rmst","FlexTable")[2], digits=3, pval_digits=digits,  ...){
   
   if(length(class) != 1 || !class %in% c("rmst","FlexTable")){
     stop("Invalid class argument, should be 'rmst' or 'FlexTable")
@@ -191,9 +192,16 @@ setMethod("calcRmst", "SemiParametricModel", function(object,class=c("rmst","Fle
                         body.cell.props = cellProperties(padding.right = 1))
   
   #Add data
-  MyFTable[3,2:6] <-   round(result$diff, digits)
-  MyFTable[1:2,2:5] <- round(result$RMST[,2:5],digits)
+  MyFTable[3,2:5] <-   round(result$diff[1,1:4], digits)
+
+  #P value rounding
+  pval <- result$diff[1,5]
+  p_digits <- as.numeric(pval_digits)
+  MyFTable[3,6] <-  if(pval >= 10^(-p_digits)) round(pval, p_digits) else paste(" < 0." , paste(rep(0, p_digits -1),collapse=""), sep="","1")
   
+  method_used <- list(...)$method
+  MyFTable[1:2,2:5] <- round(result$RMST[,2:5],digits)
+
   #Add 1st column (the arm names)
   MyFTable[1:3,1] <- c(as.character(getArmNames(object@survData)),"Difference")
   MyFTable[1:numRows,1] <- parProperties(text.align="left")

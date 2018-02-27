@@ -25,7 +25,7 @@ generic}
 Method to calculate Cox-Snell residual
 }
 \details{
-This is calculated using using surv(t, e) ~ arm, with no
+This is calculated using surv(t, e) ~ arm, with no
 covariates or strata. Data is the subset of data contained in the
 SemiParametricModel object used and the "ties" argument used by coxph is the value used 
 when creating the SemiParametric object

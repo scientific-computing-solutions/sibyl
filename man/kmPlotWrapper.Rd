@@ -36,9 +36,8 @@ labels retrieved from the survfit object.}
 Set to FALSE if legend is not to be included. ("topright")}
 
 \item{mark.time}{Default TRUE; Controls the labeling of the curves. If set to 
-FALSE, no labeling is done. If TRUE, then curves are marked at each 
-censoring time as defined by \code{x$time[x$n.censor > 0]}. If mark.time 
-is a numeric vector, then curves are marked at the specified time points.}
+FALSE, no labeling is done. If mark.time is a numeric vector, then curves
+are marked at the specified time points.}
 
 \item{cex}{Character expansion for plot symbols. The bigger the value, the 
 larger the characters on the plot. (1)}
