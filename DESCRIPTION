@@ -48,5 +48,5 @@ Depends:
     ggplot2,
     R (>= 2.10),
     survival (== 2.38-3),
-    azRMST,
+    RMST,
     ReporteRs
