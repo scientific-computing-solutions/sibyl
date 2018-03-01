@@ -191,6 +191,15 @@ setMethod("calcRmst", "SemiParametricModel", function(object,class=c("rmst","Fle
                         header.text.props = textProperties(font.weight = "bold"),
                         body.cell.props = cellProperties(padding.right = 1))
   
+  #Check if the differences are less than 0 and if so reverse the signs and switch the lower and upper CI's to show the
+  #absolute difference
+  if(result$diff[,1] < 0){
+    storedDiff <- result$diff
+    result$diff[,1] = -storedDiff[,1]
+    result$diff[,3] = -storedDiff[,4]
+    result$diff[,4] = -storedDiff[,3]
+  }
+  
   #Add data
   MyFTable[3,2:5] <-   round(result$diff[1,1:4], digits)
 
@@ -199,8 +208,7 @@ setMethod("calcRmst", "SemiParametricModel", function(object,class=c("rmst","Fle
   p_digits <- as.numeric(pval_digits)
   MyFTable[3,6] <-  if(pval >= 10^(-p_digits)) round(pval, p_digits) else paste(" < 0." , paste(rep(0, p_digits -1),collapse=""), sep="","1")
   
-  method_used <- list(...)$method
-  MyFTable[1:2,2:5] <- round(result$RMST[,2:5],digits)
+  MyFTable[1:2,2:5] <- round(result$RMST[,1:4],digits)
 
   #Add 1st column (the arm names)
   MyFTable[1:3,1] <- c(as.character(getArmNames(object@survData)),"Difference")
