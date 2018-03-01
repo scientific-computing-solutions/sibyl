@@ -191,7 +191,7 @@ setMethod("calcRmst", "SemiParametricModel", function(object,class=c("rmst","Fle
                         header.text.props = textProperties(font.weight = "bold"),
                         body.cell.props = cellProperties(padding.right = 1))
   
-  #Check if the differences are less than 0 and if so reverse the signs and switch the lower and upper CI's to show the
+  #Check if the estimate is less than 0 and if so reverse the signs and switch the lower and upper CI's to show the
   #absolute difference
   if(result$diff[,1] < 0){
     storedDiff <- result$diff
